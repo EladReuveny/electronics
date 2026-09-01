@@ -1,0 +1,23 @@
+ALTER TABLE "carts" RENAME COLUMN "createdAt" TO "created_at";--> statement-breakpoint
+ALTER TABLE "carts" RENAME COLUMN "updatedAt" TO "updated_at";--> statement-breakpoint
+ALTER TABLE "carts" RENAME COLUMN "userId" TO "user_id";--> statement-breakpoint
+ALTER TABLE "items" RENAME COLUMN "createdAt" TO "created_at";--> statement-breakpoint
+ALTER TABLE "items" RENAME COLUMN "updatedAt" TO "updated_at";--> statement-breakpoint
+ALTER TABLE "items" RENAME COLUMN "productId" TO "product_id";--> statement-breakpoint
+ALTER TABLE "items" RENAME COLUMN "cartId" TO "cart_id";--> statement-breakpoint
+ALTER TABLE "items" RENAME COLUMN "orderId" TO "order_id";--> statement-breakpoint
+ALTER TABLE "orders" RENAME COLUMN "shippingAddress" TO "shipping_address";--> statement-breakpoint
+ALTER TABLE "orders" RENAME COLUMN "createdAt" TO "created_at";--> statement-breakpoint
+ALTER TABLE "orders" RENAME COLUMN "updatedAt" TO "updated_at";--> statement-breakpoint
+ALTER TABLE "orders" RENAME COLUMN "userId" TO "user_id";--> statement-breakpoint
+ALTER TABLE "products" RENAME COLUMN "imageUrl" TO "image_url";--> statement-breakpoint
+ALTER TABLE "products" RENAME COLUMN "createdAt" TO "created_at";--> statement-breakpoint
+ALTER TABLE "products" RENAME COLUMN "updatedAt" TO "updated_at";--> statement-breakpoint
+ALTER TABLE "users" RENAME COLUMN "avatarUrl" TO "avatar_url";--> statement-breakpoint
+ALTER TABLE "users" RENAME COLUMN "createdAt" TO "created_at";--> statement-breakpoint
+ALTER TABLE "users" RENAME COLUMN "updatedAt" TO "updated_at";--> statement-breakpoint
+ALTER TABLE "wishlists" RENAME COLUMN "createdAt" TO "created_at";--> statement-breakpoint
+ALTER TABLE "wishlists" RENAME COLUMN "updatedAt" TO "updated_at";--> statement-breakpoint
+ALTER TABLE "wishlists" RENAME COLUMN "userId" TO "user_id";--> statement-breakpoint
+ALTER TABLE "wishlists_products" RENAME COLUMN "wishlistId" TO "wishlist_id";--> statement-breakpoint
+ALTER TABLE "wishlists_products" RENAME COLUMN "productId" TO "product_id";
