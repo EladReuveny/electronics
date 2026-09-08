@@ -31,6 +31,7 @@ import { usersKeys } from "../../../features/users/users.keys";
 import { useAuthStore } from "../../../lib/store/auth.store";
 import { useThemeStore } from "../../../lib/store/theme.store";
 import { handleError } from "../../../lib/utils/utils";
+import type { UpdateUserDto } from "../../../features/users/user.types";
 
 const updateUserFormSchema = z
   .object({
@@ -55,6 +56,12 @@ const findMeQuery = queryOptions({
   queryKey: usersKeys.all,
   queryFn: () => usersApi.findMe(),
 });
+
+const sidebarItems = [
+  { label: "Profile Information", to: "#profile-information" },
+  { label: "Theme", to: "#theme" },
+  { label: "Danger Zone", to: "#danger-zone" },
+];
 
 export const Route = createFileRoute("/(protected)/profile/")({
   component: ProfilePage,
@@ -81,7 +88,7 @@ function ProfilePage() {
       updateUserDto,
     }: {
       userId: string;
-      updateUserDto: Parameters<typeof usersApi.update>[1];
+      updateUserDto: UpdateUserDto;
     }) => usersApi.update(userId, updateUserDto),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: usersKeys.all }),
     onError: (err) => handleError(err),
@@ -145,17 +152,11 @@ function ProfilePage() {
     });
   };
 
-  const sidebarItems = [
-    { label: "Profile Information", to: "#profile-information" },
-    { label: "Theme", to: "#theme" },
-    { label: "Danger Zone", to: "#danger-zone" },
-  ];
-
   return (
     <div className="mx-auto px-4 py-8">
       <PageTitle title="My Profile" />
 
-      <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
+      <div className="grid grid-cols-[300px_1fr] gap-8">
         <aside className="rounded-md shadow-lg bg-(--primary-clr)/5 py-4 h-fit overflow-y-auto border-2 border-(--primary-clr)/30 sticky top-20">
           <h3 className="font-bold text-xl uppercase text-(--secondary-clr) text-center mb-4">
             Settings

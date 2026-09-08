@@ -213,7 +213,7 @@ function ProductDetailsPage() {
           <img
             src={product?.imageUrl}
             alt={product?.name}
-            className="w-150 h-125 object-cover hover:scale-105"
+            className="w-150 h-125 object-contain hover:scale-105"
           />
           <button
             type="button"

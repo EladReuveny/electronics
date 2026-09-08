@@ -1,6 +1,6 @@
+import { Link } from "@tanstack/react-router";
 import { Check, Heart, ShoppingCart } from "lucide-react";
 import React from "react";
-import { Link } from "@tanstack/react-router";
 import type { Product } from "../features/products/product.types";
 
 type ProductCardProps = {
@@ -9,7 +9,7 @@ type ProductCardProps = {
   toggleProductSelection?: (productId: string) => void;
   isInWishlist?: boolean;
   onToggleProductInWishlist?: () => void;
-  onMoveTocart?: () => void;
+  onMoveToCart?: () => void;
 };
 
 const ProductCard = ({
@@ -18,7 +18,7 @@ const ProductCard = ({
   toggleProductSelection,
   isInWishlist: isInWishlist,
   onToggleProductInWishlist,
-  onMoveTocart,
+  onMoveToCart: onMoveToCart,
 }: ProductCardProps) => {
   return (
     <Link
@@ -72,13 +72,13 @@ const ProductCard = ({
           </p>
         </div>
 
-        {onMoveTocart && (
+        {onMoveToCart && (
           <button
             type="button"
             className="mt-4 cursor-pointer py-2 px-4 bg-(--text-clr) text-(--primary-clr) rounded-lg flex items-center gap-2 hover:brightness-90 active:scale-[97%]"
             onClick={(e) => {
               e.preventDefault();
-              onMoveTocart();
+              onMoveToCart();
             }}
           >
             Move To Cart <ShoppingCart className="size-4" />

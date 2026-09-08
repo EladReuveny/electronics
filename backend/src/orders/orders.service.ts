@@ -3,6 +3,11 @@ import { carts, items, orders, products } from '@app/infrastructure/db/schema';
 import type { Db } from '@app/infrastructure/db/schema.types';
 import { NotificationsService } from '@app/infrastructure/notifications/notifications.service';
 import {
+  REDIS_CACHE_TTL_SECONDS,
+  REDIS_CLIENT,
+} from '@app/infrastructure/redis/redis.constants';
+import { RedisService } from '@app/infrastructure/redis/redis.service';
+import {
   BadRequestException,
   HttpStatus,
   Inject,
@@ -11,6 +16,7 @@ import {
 } from '@nestjs/common';
 import { count, eq, sql } from 'drizzle-orm';
 import XMLBuilder from 'fast-xml-builder';
+import Redis from 'ioredis';
 import { Logger } from 'pino-nestjs';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -23,6 +29,8 @@ export class OrdersService {
     @Inject(DB_CLIENT) private readonly db: Db,
     private readonly logger: Logger,
     private readonly notificationsService: NotificationsService,
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    private readonly redisService: RedisService,
   ) {}
 
   async checkout(userId: string, createOrderDto: CreateOrderDto) {
@@ -110,6 +118,17 @@ export class OrdersService {
       );
     }
 
+    await this.redisService.invalidateCacheByKeys([
+      'orders',
+      'orders:count',
+      'orders:xml',
+      `orders:users:${userId}`,
+      'carts',
+      `carts:${cart.id}`,
+      `carts:users:${userId}`,
+    ]);
+    await this.redisService.deleteKeysByPattern('products*');
+
     return this.db.query.orders.findFirst({
       where: {
         id: order.id,
@@ -125,10 +144,32 @@ export class OrdersService {
   }
 
   async findAll() {
-    return this.db.query.orders.findMany();
+    const key = 'orders';
+    const cachedOrders = await this.redis.get(key);
+
+    if (cachedOrders) {
+      return JSON.parse(cachedOrders);
+    }
+
+    const orders = await this.db.query.orders.findMany();
+
+    await this.redis.setex(
+      key,
+      REDIS_CACHE_TTL_SECONDS,
+      JSON.stringify(orders),
+    );
+
+    return orders;
   }
 
   async findAllAsXML() {
+    const key = 'orders:xml';
+    const cachedOrders = await this.redis.get(key);
+
+    if (cachedOrders) {
+      return cachedOrders;
+    }
+
     const orders = await this.db.query.orders.findMany({
       with: {
         items: {
@@ -147,10 +188,19 @@ export class OrdersService {
       },
     });
 
+    await this.redis.setex(key, REDIS_CACHE_TTL_SECONDS, xml);
+
     return xml;
   }
 
   async findOne(orderId: string) {
+    const key = `orders:${orderId}`;
+    const cachedOrder = await this.redis.get(key);
+
+    if (cachedOrder) {
+      return JSON.parse(cachedOrder);
+    }
+
     const order = await this.db.query.orders.findFirst({
       where: {
         id: orderId,
@@ -162,14 +212,29 @@ export class OrdersService {
       throw new NotFoundException(`Order with id ${orderId} not found`);
     }
 
+    await this.redis.setex(key, REDIS_CACHE_TTL_SECONDS, JSON.stringify(order));
+
     return order;
   }
 
   async update(orderId: string, updateOrderDto: UpdateOrderDto) {
-    await this.db
+    const [updatedOrder] = await this.db
       .update(orders)
       .set(updateOrderDto)
-      .where(eq(orders.id, orderId));
+      .where(eq(orders.id, orderId))
+      .returning({ id: orders.id, userId: orders.userId });
+
+    if (!updatedOrder) {
+      throw new NotFoundException(`Order with id ${orderId} not found`);
+    }
+
+    await this.redisService.invalidateCacheByKeys([
+      'orders',
+      'orders:count',
+      'orders:xml',
+      `orders:${orderId}`,
+      `orders:users:${updatedOrder.userId}`,
+    ]);
 
     return this.db.query.orders.findFirst({
       where: {
@@ -186,11 +251,36 @@ export class OrdersService {
   }
 
   async remove(orderId: string) {
-    await this.db.delete(orders).where(eq(orders.id, orderId));
+    const [deletedOrder] = await this.db
+      .delete(orders)
+      .where(eq(orders.id, orderId))
+      .returning({
+        id: orders.id,
+        userId: orders.userId,
+      });
+
+    if (!deletedOrder) {
+      throw new NotFoundException(`Order with id ${orderId} not found`);
+    }
+
+    await this.redisService.invalidateCacheByKeys([
+      'orders',
+      'orders:count',
+      'orders:xml',
+      `orders:${orderId}`,
+      `orders:users:${deletedOrder.userId}`,
+    ]);
   }
 
   async findUserOrders(userId: string) {
-    return this.db.query.orders.findMany({
+    const key = `orders:users:${userId}`;
+    const cachedOrders = await this.redis.get(key);
+
+    if (cachedOrders) {
+      return JSON.parse(cachedOrders);
+    }
+
+    const orders = await this.db.query.orders.findMany({
       where: {
         userId,
       },
@@ -202,6 +292,14 @@ export class OrdersService {
         },
       },
     });
+
+    await this.redis.setex(
+      key,
+      REDIS_CACHE_TTL_SECONDS,
+      JSON.stringify(orders),
+    );
+
+    return orders;
   }
 
   async cancelOrder(
@@ -250,7 +348,7 @@ export class OrdersService {
       );
     }
 
-    return await this.db.transaction(async (tx) => {
+    const result = await this.db.transaction(async (tx) => {
       for (const item of order.items) {
         await tx
           .update(products)
@@ -272,12 +370,35 @@ export class OrdersService {
         message: 'Order cancelled successfully',
       };
     });
+
+    await this.redisService.invalidateCacheByKeys([
+      'orders',
+      'orders:xml',
+      `orders:${orderId}`,
+      `orders:users:${userId}`,
+    ]);
+    await this.redisService.deleteKeysByPattern('products*');
+
+    return result;
   }
 
   async findOrdersCount() {
+    const key = 'orders:count';
+    const cachedOrdersCount = await this.redis.get(key);
+
+    if (cachedOrdersCount) {
+      return JSON.parse(cachedOrdersCount);
+    }
+
     const [result] = await this.db
       .select({ ordersCount: count() })
       .from(orders);
+
+    await this.redis.setex(
+      key,
+      REDIS_CACHE_TTL_SECONDS,
+      JSON.stringify(result),
+    );
 
     return result;
   }

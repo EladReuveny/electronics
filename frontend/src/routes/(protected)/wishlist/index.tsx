@@ -41,7 +41,7 @@ function WishlistPage() {
     onError: (err) => handleError(err),
   });
 
-  const moveTocartMutation = useMutation({
+  const moveToCartMutation = useMutation({
     mutationFn: ({
       productId,
       quantity,
@@ -64,15 +64,15 @@ function WishlistPage() {
     onError: (err) => handleError(err),
   });
 
-  const handleMoveTocart = (productId: string) => {
+  const handleMoveToCart = (productId: string) => {
     const quantity = prompt("Enter quantity", "1");
 
     if (!quantity) return;
 
-    moveTocartMutation.mutate(
+    moveToCartMutation.mutate(
       {
         productId,
-        quantity: !isNaN(Number(quantity)) ? Number(quantity) : 1,
+        quantity: Number(quantity),
       },
       {
         onSuccess: () => navigate({ to: "/cart" }),
@@ -121,7 +121,7 @@ function WishlistPage() {
                     productId: product.id,
                   })
                 }
-                onMoveTocart={() => handleMoveTocart(product.id)}
+                onMoveToCart={() => handleMoveToCart(product.id)}
               />
             ))}
           </div>

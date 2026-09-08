@@ -1,5 +1,7 @@
+import { Roles } from '@app/common/decorators/roles.decorator';
 import { User } from '@app/common/decorators/user.decorator';
 import { JwtGuard } from '@app/common/guards/jwt.guard';
+import { RolesGuard } from '@app/common/guards/roles.guard';
 import {
   Body,
   Controller,
@@ -19,16 +21,20 @@ export class WishlistsController {
   constructor(private readonly wishlistsService: WishlistsService) {}
 
   @Get()
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles('ADMIN')
   findAll() {
     return this.wishlistsService.findAll();
   }
 
   @Get(':wishlistId')
+  @UseGuards(JwtGuard)
   findOne(@Param('wishlistId') wishlistId: string) {
     return this.wishlistsService.findOne(wishlistId);
   }
 
   @Patch(':wishlistId')
+  @UseGuards(JwtGuard)
   update(
     @Param('wishlistId') wishlistId: string,
     @Body() updateWishlistDto: UpdateWishlistDto,

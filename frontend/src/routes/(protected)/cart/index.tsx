@@ -75,6 +75,7 @@ function CartPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cartsKeys.all });
       queryClient.invalidateQueries({ queryKey: ordersKeys.all });
+      queryClient.invalidateQueries({ queryKey: productsKeys.all });
     },
     onError: (err) => handleError(err),
   });
@@ -84,9 +85,7 @@ function CartPage() {
       return;
     }
 
-    clearCartMutation.mutate(undefined, {
-      onSuccess: () => navigate({ to: "/" }),
-    });
+    clearCartMutation.mutate();
   };
 
   const handleCheckout = () => {
