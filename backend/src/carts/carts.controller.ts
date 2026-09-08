@@ -9,28 +9,33 @@ import {
   Patch,
   Post,
   Put,
-  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AddProductToCartDto } from './add-product-to-cart.dto';
 import { CartsService } from './carts.service';
 import { UpdateCartDto } from './dto/update-cart.dto';
+import { Roles } from '@app/common/decorators/roles.decorator';
+import { RolesGuard } from '@app/common/guards/roles.guard';
 
 @Controller('carts')
 export class CartsController {
   constructor(private readonly cartsService: CartsService) {}
 
   @Get()
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles('ADMIN')
   findAll() {
     return this.cartsService.findAll();
   }
 
   @Get(':cartId')
+  @UseGuards(JwtGuard)
   findOne(@Param('cartId') cartId: string) {
     return this.cartsService.findOne(cartId);
   }
 
   @Patch(':cartId')
+  @UseGuards(JwtGuard)
   update(
     @Param('cartId') cartId: string,
     @Body() updateCartDto: UpdateCartDto,
@@ -58,10 +63,7 @@ export class CartsController {
     @User('sub') userId: string,
     @Param('productId') productId: string,
   ) {
-    return this.cartsService.removeProductFromCart(
-      userId,
-      productId,
-    );
+    return this.cartsService.removeProductFromCart(userId, productId);
   }
 
   @Put('clear')

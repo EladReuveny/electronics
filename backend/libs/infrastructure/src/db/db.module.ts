@@ -17,6 +17,7 @@ import * as schema from './schema';
         });
 
         const db = drizzle({ client: pool, relations: schema.relations });
+
         return db;
       },
     },

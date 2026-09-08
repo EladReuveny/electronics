@@ -1,7 +1,13 @@
 import { DB_CLIENT } from '@app/infrastructure/db/db.constants';
+import {
+  REDIS_CACHE_TTL_SECONDS,
+  REDIS_CLIENT,
+} from '@app/infrastructure/redis/redis.constants';
+import { RedisService } from '@app/infrastructure/redis/redis.service';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { count, eq } from 'drizzle-orm';
+import Redis from 'ioredis';
 import {
   carts,
   users,
@@ -10,6 +16,7 @@ import {
 import type { Db, User } from '../../libs/infrastructure/src/db/schema.types';
 import { CreateUserDto } from '../auth/dto/create-user.dto';
 import { AuthUser } from '../auth/types/auth.types';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
@@ -17,18 +24,37 @@ export class UsersService {
   constructor(
     @Inject(DB_CLIENT)
     private readonly db: Db,
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    private readonly redisService: RedisService,
   ) {}
 
   async findUserByEmail(email: string) {
-    return this.db.query.users.findFirst({
+    const key = `users:email:${email}`;
+    const cachedUser = await this.redis.get(key);
+
+    if (cachedUser) {
+      return JSON.parse(cachedUser);
+    }
+
+    const user = await this.db.query.users.findFirst({
       where: {
         email,
       },
     });
+
+    if (user) {
+      await this.redis.setex(
+        key,
+        REDIS_CACHE_TTL_SECONDS,
+        JSON.stringify(user),
+      );
+    }
+
+    return user;
   }
 
   async create(createUserDto: CreateUserDto) {
-    return await this.db.transaction(async (tx) => {
+    const user = await this.db.transaction(async (tx) => {
       const [user] = await tx.insert(users).values(createUserDto).returning();
 
       await tx.insert(wishlists).values({
@@ -41,13 +67,35 @@ export class UsersService {
 
       return tx.query.users.findFirst({ where: { id: user.id } });
     });
+
+    await this.redisService.invalidateCacheByKeys(['users', 'users:count']);
+
+    return user;
   }
 
   async findAll() {
-    return this.db.query.users.findMany();
+    const key = 'users';
+    const cachedUsers = await this.redis.get(key);
+
+    if (cachedUsers) {
+      return JSON.parse(cachedUsers);
+    }
+
+    const users = await this.db.query.users.findMany();
+
+    await this.redis.setex(key, REDIS_CACHE_TTL_SECONDS, JSON.stringify(users));
+
+    return users;
   }
 
-  async findMe(userId: string) {
+  async findMe(userId: string): Promise<User> {
+    const key = `users:${userId}`;
+    const cachedUser = await this.redis.get(key);
+
+    if (cachedUser) {
+      return JSON.parse(cachedUser);
+    }
+
     const user = await this.db.query.users.findFirst({
       where: {
         id: userId,
@@ -57,6 +105,8 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
+
+    await this.redis.setex(key, REDIS_CACHE_TTL_SECONDS, JSON.stringify(user));
 
     return user;
   }
@@ -71,11 +121,63 @@ export class UsersService {
       .set(updateUserDto)
       .where(eq(users.id, userId))
       .returning();
+
+    if (!updatedUser) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    await this.redisService.invalidateCacheByKeys([
+      'users',
+      `users:${updatedUser?.id}`,
+      `users:email:${updatedUser?.email}`,
+    ]);
+
     return updatedUser;
   }
 
+  async updateUserRole(
+    userId: string,
+    { role }: UpdateUserRoleDto,
+  ): Promise<{ message: string }> {
+    const userToUpdate = await this.findMe(userId);
+
+    await this.db
+      .update(users)
+      .set({
+        role,
+      })
+      .where(eq(users.id, userId));
+
+    await this.redisService.invalidateCacheByKeys([
+      'users',
+      `users:${userId}`,
+      `users:email:${userToUpdate.email}`,
+    ]);
+
+    return {
+      message: `User with id ${userId} role updated to ${role}`,
+    };
+  }
+
   async remove(userId: string) {
-    await this.db.delete(users).where(eq(users.id, userId));
+    const [deletedUser] = await this.db
+      .delete(users)
+      .where(eq(users.id, userId))
+      .returning({
+        id: users.id,
+        email: users.email,
+      });
+
+    if (!deletedUser) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    await this.redisService.invalidateCacheByKeys([
+      'users',
+      `users:${deletedUser.id}`,
+      `users:email:${deletedUser.email}`,
+      'users:count',
+    ]);
   }
 
   private async hashPassword(password: string) {
@@ -90,8 +192,27 @@ export class UsersService {
     };
   }
 
+  sanitizeUserWithoutPassword(user: User): Omit<User, 'password'> {
+    const { password, ...rest } = user;
+
+    return rest;
+  }
+
   async findUsersCount() {
+    const key = 'users:count';
+    const cachedUsersCount = await this.redis.get(key);
+
+    if (cachedUsersCount) {
+      return JSON.parse(cachedUsersCount);
+    }
+
     const [result] = await this.db.select({ usersCount: count() }).from(users);
+
+    await this.redis.setex(
+      key,
+      REDIS_CACHE_TTL_SECONDS,
+      JSON.stringify(result),
+    );
 
     return result;
   }

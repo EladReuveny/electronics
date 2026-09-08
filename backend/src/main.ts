@@ -31,10 +31,11 @@ async function bootstrap() {
   );
 
   const PORT = configService.get<number>('PORT') ?? 3000;
+  const SERVER_URL = configService.get<string>('SERVER_URL') ?? `http://localhost:${PORT}/api/v1`;
 
   await app.listen(PORT, () => {
     logger.log(
-      `Server is running on ${configService.get<string>('NODE_ENV') === 'dev' ? `http://localhost:${PORT}` : 'https://yourdomain.com'}/api/v1`,
+      `Server is running on ${SERVER_URL} in ${configService.get<string>('NODE_ENV')} mode`,
     );
   });
 }

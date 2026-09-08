@@ -1,20 +1,48 @@
 import { DB_CLIENT } from '@app/infrastructure/db/db.constants';
 import { carts, items, wishlistsProducts } from '@app/infrastructure/db/schema';
 import type { Db } from '@app/infrastructure/db/schema.types';
+import {
+  REDIS_CACHE_TTL_SECONDS,
+  REDIS_CLIENT,
+} from '@app/infrastructure/redis/redis.constants';
+import { RedisService } from '@app/infrastructure/redis/redis.service';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, eq, sql } from 'drizzle-orm';
+import Redis from 'ioredis';
 import { AddProductToCartDto } from './add-product-to-cart.dto';
 import { UpdateCartDto } from './dto/update-cart.dto';
 
 @Injectable()
 export class CartsService {
-  constructor(@Inject(DB_CLIENT) private readonly db: Db) {}
+  constructor(
+    @Inject(DB_CLIENT) private readonly db: Db,
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    private readonly redisService: RedisService,
+  ) {}
 
   async findAll() {
-    return this.db.query.carts.findMany();
+    const key = 'carts';
+    const cachedCarts = await this.redis.get(key);
+
+    if (cachedCarts) {
+      return JSON.parse(cachedCarts);
+    }
+
+    const carts = await this.db.query.carts.findMany();
+
+    await this.redis.setex(key, REDIS_CACHE_TTL_SECONDS, JSON.stringify(carts));
+
+    return carts;
   }
 
   async findOne(cartId: string) {
+    const key = `carts:${cartId}`;
+    const cachedCart = await this.redis.get(key);
+
+    if (cachedCart) {
+      return JSON.parse(cachedCart);
+    }
+
     const cart = await this.db.query.carts.findFirst({
       where: {
         id: cartId,
@@ -32,17 +60,52 @@ export class CartsService {
       throw new NotFoundException(`Cart with id ${cartId} not found`);
     }
 
+    await this.redis.setex(key, REDIS_CACHE_TTL_SECONDS, JSON.stringify(cart));
+
     return cart;
   }
 
   async update(cartId: string, updateCartDto: UpdateCartDto) {
-    await this.db.update(carts).set(updateCartDto).where(eq(carts.id, cartId));
+    const [updatedCart] = await this.db
+      .update(carts)
+      .set(updateCartDto)
+      .where(eq(carts.id, cartId))
+      .returning({
+        id: carts.id,
+        userId: carts.userId,
+      });
 
-    return this.findOne(cartId);
+    if (!updatedCart) {
+      throw new NotFoundException(`Cart with id ${cartId} not found`);
+    }
+
+    await this.redisService.invalidateCacheByKeys( [
+      'carts',
+      `carts:${cartId}`,
+      `carts:users:${updatedCart.userId}`,
+    ]);
+
+    return await this.findOne(cartId);
   }
 
   async remove(cartId: string) {
-    this.db.delete(carts).where(eq(carts.id, cartId));
+    const [deletedCart] = await this.db
+      .delete(carts)
+      .where(eq(carts.id, cartId))
+      .returning({
+        id: carts.id,
+        userId: carts.userId,
+      });
+
+    if (!deletedCart) {
+      throw new NotFoundException(`Cart with id ${cartId} not found`);
+    }
+
+    await this.redisService.invalidateCacheByKeys([
+      'carts',
+      `carts:${cartId}`,
+      `carts:users:${deletedCart.userId}`,
+    ]);
   }
 
   async addProductToCart(
@@ -87,7 +150,7 @@ export class CartsService {
       throw new NotFoundException(`Product with id ${productId} not found`);
     }
 
-    return await this.db.transaction(async (tx) => {
+    const updatedCart = await this.db.transaction(async (tx) => {
       await tx
         .delete(wishlistsProducts)
         .where(
@@ -131,6 +194,10 @@ export class CartsService {
         },
       });
     });
+
+    await this.redisService.invalidateCacheByKeys(['carts', `carts:${cart.id}`, `carts:users:${userId}`]);
+
+    return updatedCart;
   }
 
   async removeProductFromCart(userId: string, productId: string) {
@@ -147,21 +214,6 @@ export class CartsService {
       throw new NotFoundException(`Cart not found for user with id ${userId}`);
     }
 
-    const wishlist = await this.db.query.wishlists.findFirst({
-      where: {
-        userId,
-      },
-      columns: {
-        id: true,
-      },
-    });
-
-    if (!wishlist) {
-      throw new NotFoundException(
-        `Wishlist not found for user with id ${userId}`,
-      );
-    }
-
     const product = await this.db.query.products.findFirst({
       where: { id: productId },
       columns: { price: true },
@@ -171,11 +223,17 @@ export class CartsService {
       throw new NotFoundException(`Product with id ${productId} not found`);
     }
 
-    return await this.db.transaction(async (tx) => {
+    const updatedCart = await this.db.transaction(async (tx) => {
       const [deletedItem] = await tx
         .delete(items)
         .where(and(eq(items.cartId, cart.id), eq(items.productId, productId)))
         .returning({ quantity: items.quantity });
+
+      if (!deletedItem) {
+        throw new NotFoundException(
+          `Item with product id ${productId} not found in cart with id ${cart.id}`,
+        );
+      }
 
       await tx
         .update(carts)
@@ -197,6 +255,10 @@ export class CartsService {
         },
       });
     });
+
+    await this.redisService.invalidateCacheByKeys(['carts', `carts:${cart.id}`, `carts:users:${userId}`]);
+
+    return updatedCart;
   }
 
   async clearCart(userId: string) {
@@ -213,7 +275,7 @@ export class CartsService {
       throw new NotFoundException(`Cart not found for user with id ${userId}`);
     }
 
-    return await this.db.transaction(async (tx) => {
+    const updatedcart = await this.db.transaction(async (tx) => {
       await tx.delete(items).where(eq(items.cartId, cart.id));
 
       const [updatedcart] = await tx
@@ -224,12 +286,37 @@ export class CartsService {
 
       return updatedcart;
     });
+
+    await this.redisService.invalidateCacheByKeys(['carts', `carts:${cart.id}`, `carts:users:${userId}`]);
+
+    return updatedcart;
   }
 
   async findUserCart(userId: string) {
-    return this.db.query.carts.findFirst({
+    const key = `carts:users:${userId}`;
+    const cachedCart = await this.redis.get(key);
+
+    if (cachedCart) {
+      return JSON.parse(cachedCart);
+    }
+
+    const cart = await this.db.query.carts.findFirst({
       where: { userId },
-      with: { items: true },
+      with: {
+        items: {
+          with: {
+            product: true,
+          },
+        },
+      },
     });
+
+    if (!cart) {
+      throw new NotFoundException(`Cart not found for user with id ${userId}`);
+    }
+
+    await this.redis.setex(key, REDIS_CACHE_TTL_SECONDS, JSON.stringify(cart));
+
+    return cart;
   }
 }

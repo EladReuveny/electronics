@@ -15,7 +15,7 @@ import { UsersService } from '../users/users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { AuthResponse, JwtPayload } from './types/auth.types';
+import { AuthUser, JwtPayload } from './types/auth.types';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +29,7 @@ export class AuthService {
 
   async login(
     loginUserDto: LoginUserDto,
-  ): Promise<AuthResponse & { accessToken: string }> {
+  ): Promise<{ user: AuthUser; accessToken: string }> {
     const user = await this.usersService.findUserByEmail(loginUserDto.email);
 
     if (!user) {
@@ -61,7 +61,7 @@ export class AuthService {
 
   async register(
     createUserDto: CreateUserDto,
-  ): Promise<AuthResponse & { accessToken: string }> {
+  ): Promise<{ user: AuthUser; accessToken: string }> {
     const user = await this.usersService.findUserByEmail(createUserDto.email);
 
     if (user) {
@@ -114,7 +114,13 @@ export class AuthService {
     const user = await this.usersService.findUserByEmail(email);
 
     if (user) {
-      await this.notificationsService.sendPasswordResetEmail(user);
+      try {
+        await this.notificationsService.sendPasswordResetEmail(user);
+      } catch (err: unknown) {
+        this.logger.error(
+          `Failed to send password reset email to user with email ${email}: ${err}`,
+        );
+      }
     }
 
     return {

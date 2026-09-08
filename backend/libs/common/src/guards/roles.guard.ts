@@ -1,10 +1,17 @@
 import { Role } from '@app/infrastructure/db/schema.types';
-import { CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
-import { ROLES_KEY } from '../decorators/roles.decorator';
 import { JwtPayload } from '../../../../src/auth/types/auth.types';
+import { ROLES_KEY } from '../decorators/roles.decorator';
 
+@Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
@@ -17,8 +24,20 @@ export class RolesGuard implements CanActivate {
     if (!requiredRoles) return true;
 
     const req = context.switchToHttp().getRequest<Request>();
-    const user: JwtPayload = req['user'];
+    const user: JwtPayload | null = req['user'];
 
-    return requiredRoles.some((role) => user.role === role);
+    if (!user) {
+      throw new UnauthorizedException('Authentication required.');
+    }
+
+    const isAuthorized = requiredRoles.some((role) => user.role === role);
+
+    if (!isAuthorized) {
+      throw new ForbiddenException(
+        'You do not have the required permissions to access this resource.',
+      );
+    }
+
+    return true;
   }
 }

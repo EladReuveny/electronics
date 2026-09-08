@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AppService {
   healthCheck() {
     return {
-      status: 'OK',
+      status: HttpStatus.OK,
       message: 'Server is healthy',
       timestamp: new Date().toLocaleString(),
     };

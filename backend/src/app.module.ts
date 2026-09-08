@@ -1,8 +1,10 @@
 import { NotificationsModule } from '@app/infrastructure/notifications/notifications.module';
+import { RedisModule } from '@app/infrastructure/redis/redis.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { JwtModule, JwtSignOptions } from '@nestjs/jwt';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'pino-nestjs';
 import { DbModule } from '../libs/infrastructure/src/db/db.module';
 import { AppController } from './app.controller';
@@ -39,6 +41,7 @@ import { WishlistsModule } from './wishlists/wishlists.module';
       },
     ]),
     DbModule,
+    RedisModule,
     JwtModule.registerAsync({
       global: true,
       inject: [ConfigService],
@@ -59,6 +62,12 @@ import { WishlistsModule } from './wishlists/wishlists.module';
     CartsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

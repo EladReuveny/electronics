@@ -11,7 +11,7 @@ export const usersApi = {
     const { data } = await api.get(`${RESOURCE_PREFIX}`);
     return data;
   },
-  findMe: async (): Promise<User> => {
+  findMe: async (): Promise<Omit<User, "password">> => {
     const { data } = await api.get(`${RESOURCE_PREFIX}/me`);
     return data;
   },

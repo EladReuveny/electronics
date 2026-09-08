@@ -27,6 +27,7 @@ import PageTitle from "../../../components/PageTitle";
 import type { Order, Status } from "../../../features/orders/order.types";
 import { ordersApi } from "../../../features/orders/orders.api";
 import { ordersKeys } from "../../../features/orders/orders.keys";
+import { productsKeys } from "../../../features/products/products.keys";
 import { usersApi } from "../../../features/users/users.api";
 import { usersKeys } from "../../../features/users/users.keys";
 import { handleError } from "../../../lib/utils/utils";
@@ -126,8 +127,8 @@ function OrdersPage() {
   const cancelOrderMutation = useMutation({
     mutationFn: (orderId: string) => ordersApi.cancelOrder(orderId),
     onSuccess: () => {
-      toast.success("Order canceled successfully");
       queryClient.invalidateQueries({ queryKey: ordersKeys.all });
+      queryClient.invalidateQueries({ queryKey: productsKeys.all });
     },
     onError: (err) => handleError(err),
   });
@@ -407,7 +408,7 @@ function OrdersPage() {
                       <p className="text-xs text-(--text-clr-muted) uppercase tracking-wider font-bold">
                         Customer
                       </p>
-                      <p className="font-bold">@{user.email?.split("@")[0]}</p>
+                      <p className="font-bold">@{user.email.split("@")[0]}</p>
                     </div>
                   </div>
                 )}
@@ -428,10 +429,11 @@ function OrdersPage() {
                 <div className="space-y-3 overflow-y-auto mt-4">
                   {activeOrder.items.map((item, i) => (
                     <Link
+                      key={`order-${activeOrder.id}-item-${i}`}
                       to="/products/$productId"
                       params={{ productId: item.product.id }}
-                      key={`order-${activeOrder.id}-item-${i}`}
                       className="flex justify-between items-center p-3 border-2 border-(--primary-clr)/30 rounded-xl bg-(--primary-clr)/5 shadow-md hover:bg-(--primary-clr)/15"
+                      title={`View details for ${item.product.name}`}
                     >
                       <div className="flex items-center gap-4">
                         <img
