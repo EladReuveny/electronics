@@ -1,3 +1,5 @@
+import { FILE_UPLOAD_PRODUCTS_FOLDER } from '@app/infrastructure/cloudinary/cloudinary.constants';
+import { CloudinaryService } from '@app/infrastructure/cloudinary/cloudinary.service';
 import { DB_CLIENT } from '@app/infrastructure/db/db.constants';
 import { products } from '@app/infrastructure/db/schema';
 import type { Db } from '@app/infrastructure/db/schema.types';
@@ -11,6 +13,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { count, countDistinct, eq, inArray } from 'drizzle-orm';
 import Redis from 'ioredis';
@@ -24,12 +27,36 @@ export class ProductsService {
     @Inject(DB_CLIENT) private readonly db: Db,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
     private readonly redisService: RedisService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
-  async create(createProductDto: CreateProductDto) {
+  async create(
+    createProductDto: CreateProductDto,
+    productImage?: Express.Multer.File,
+  ) {
+    if (!createProductDto.imageUrl?.trim() && !productImage) {
+      throw new BadRequestException(
+        'Image URL is required or upload a product image file.',
+      );
+    }
+
+    if (productImage) {
+      try {
+        const { secure_url } = await this.cloudinaryService.uploadFile(
+          productImage,
+          FILE_UPLOAD_PRODUCTS_FOLDER,
+        );
+        createProductDto.imageUrl = secure_url;
+      } catch (err: unknown) {
+        throw new ServiceUnavailableException(
+          `Failed to upload product image to Cloudinary: ${err}`,
+        );
+      }
+    }
+
     const [product] = await this.db
       .insert(products)
-      .values(createProductDto)
+      .values({ ...createProductDto, imageUrl: createProductDto.imageUrl! })
       .returning();
 
     await this.redisService.deleteKeysByPattern('products*');
@@ -83,7 +110,25 @@ export class ProductsService {
     return product;
   }
 
-  async update(productId: string, updateProductDto: UpdateProductDto) {
+  async update(
+    productId: string,
+    updateProductDto: UpdateProductDto,
+    productImage?: Express.Multer.File,
+  ) {
+    if (productImage) {
+      try {
+        const { secure_url } = await this.cloudinaryService.uploadFile(
+          productImage,
+          FILE_UPLOAD_PRODUCTS_FOLDER,
+        );
+        updateProductDto.imageUrl = secure_url;
+      } catch (err: unknown) {
+        throw new ServiceUnavailableException(
+          `Failed to upload product image to Cloudinary: ${err}`,
+        );
+      }
+    }
+
     const [product] = await this.db
       .update(products)
       .set(updateProductDto)

@@ -3,15 +3,25 @@ import { User } from '@app/common/decorators/user.decorator';
 import { JwtGuard } from '@app/common/guards/jwt.guard';
 import { RolesGuard } from '@app/common/guards/roles.guard';
 import {
+  FILE_TYPE,
+  MAX_FILE_SIZE,
+} from '@app/infrastructure/cloudinary/cloudinary.constants';
+import {
   Body,
   Controller,
   Delete,
+  FileTypeValidator,
   Get,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   Patch,
   Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { CartsService } from '../carts/carts.service';
 import { OrdersService } from '../orders/orders.service';
@@ -51,11 +61,25 @@ export class UsersController {
 
   @Patch(':userId')
   @UseGuards(JwtGuard)
+  @UseInterceptors(FileInterceptor('avatarFile'))
   update(
     @Param('userId') userId: string,
     @Body() updateUserDto: UpdateUserDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({
+            fileType: FILE_TYPE,
+            skipMagicNumbersValidation: false,
+          }),
+          new MaxFileSizeValidator({ maxSize: MAX_FILE_SIZE }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    avatarImage?: Express.Multer.File,
   ) {
-    return this.usersService.update(userId, updateUserDto);
+    return this.usersService.update(userId, updateUserDto, avatarImage);
   }
 
   @Patch(':userId/role')

@@ -67,12 +67,9 @@ function CategoriesPage() {
     error: wishlistProductsIdsError,
   } = useQuery({
     queryKey: wishlistsKeys.byUserId(user?.id ?? ""),
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const wishlist = await usersApi.findUserWishlist(user.id);
-      return wishlist.products.map((p) => p.id);
-    },
+    queryFn: async () => await usersApi.findUserWishlist(user?.id ?? ""),
     enabled: !!user?.id,
+    select: (wishlist) => wishlist.products.map((p) => p.id),
   });
 
   const addProductToWishlistMutation = useMutation({
@@ -109,7 +106,7 @@ function CategoriesPage() {
 
   if (productsError || wishlistProductsIdsError) {
     handleError(productsError || wishlistProductsIdsError);
-    return
+    return;
   }
 
   return (

@@ -31,7 +31,6 @@ import { usersKeys } from "../../../features/users/users.keys";
 import { useAuthStore } from "../../../lib/store/auth.store";
 import { useThemeStore } from "../../../lib/store/theme.store";
 import { handleError } from "../../../lib/utils/utils";
-import type { UpdateUserDto } from "../../../features/users/user.types";
 
 const updateUserFormSchema = z
   .object({
@@ -40,7 +39,7 @@ const updateUserFormSchema = z
     confirmPassword: z.string(),
     address: z.string(),
     phone: z.string(),
-    avatarUrl: z.file("Invalid file"),
+    avatarFile: z.file("Invalid file").optional(),
   })
   .superRefine((data, ctx) => {
     if (data.confirmPassword && data.password !== data.confirmPassword) {
@@ -51,6 +50,8 @@ const updateUserFormSchema = z
       });
     }
   });
+
+export type UpdateUserFormType = z.infer<typeof updateUserFormSchema>;
 
 const findMeQuery = queryOptions({
   queryKey: usersKeys.all,
@@ -85,11 +86,11 @@ function ProfilePage() {
   const updateUserMutation = useMutation({
     mutationFn: ({
       userId,
-      updateUserDto,
+       formData,
     }: {
       userId: string;
-      updateUserDto: UpdateUserDto;
-    }) => usersApi.update(userId, updateUserDto),
+      formData: FormData;
+    }) => usersApi.update(userId, formData),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: usersKeys.all }),
     onError: (err) => handleError(err),
   });
@@ -109,19 +110,36 @@ function ProfilePage() {
       confirmPassword: "",
       phone: user.phone ?? "",
       address: user.address ?? "",
-      avatarUrl: user.avatarUrl ?? "",
-    },
+      avatarFile: undefined,
+    } as UpdateUserFormType,
     validators: {
       onChange: updateUserFormSchema,
       onBlur: updateUserFormSchema,
       onSubmit: updateUserFormSchema,
     },
     onSubmit: ({ value }) => {
-      if (!user?.id) return;
+      const formData = new FormData();
+
+      if (value.password) {
+        formData.append("password", value.password);
+      }
+
+      if (value.address) {
+        formData.append("address", value.address);
+      }
+
+      if (value.phone) {
+        formData.append("phone", value.phone);
+      }
+
+      if (value.avatarFile instanceof File) {
+        formData.append("avatarFile", value.avatarFile);
+      }
+
       updateUserMutation.mutate(
         {
           userId: user.id,
-          updateUserDto: value,
+          formData,
         },
         {
           onSuccess: () => {
@@ -265,15 +283,77 @@ function ProfilePage() {
                     </updateUserForm.Field>
                   </div>
 
-                  <updateUserForm.Field name="avatarUrl">
-                    {(field) => (
-                      <FormField
-                        field={field}
-                        label="Avatar"
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                      />
-                    )}
+                  <updateUserForm.Field name="avatarFile">
+                    {(field) => {
+                      const selectedFile = field.state.value;
+
+                      return (
+                        <FormField
+                          field={field}
+                          label="Profile Image"
+                          type="file"
+                        >
+                          <div className="flex flex-col items-center gap-4 rounded-xl border-2 border-(--primary-clr)/20 bg-(--primary-clr)/5 px-6 py-6">
+                            <input
+                              id={field.name}
+                              name={field.name}
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              className="hidden"
+                              onChange={(e) => {
+                                field.handleChange(e.target.files?.[0]);
+                              }}
+                              onBlur={field.handleBlur}
+                            />
+
+                            <div className="size-32 overflow-hidden rounded-full border-4 border-(--primary-clr)/30 bg-(--bg-clr) shadow-lg">
+                              {selectedFile ? (
+                                <img
+                                  src={URL.createObjectURL(selectedFile)}
+                                  alt="Selected profile"
+                                  className="size-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex size-full items-center justify-center">
+                                  <UserPen className="size-14 text-(--primary-clr)/40" />
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="text-center">
+                              <p className="max-w-sm truncate font-semibold">
+                                {selectedFile
+                                  ? selectedFile.name
+                                  : "Choose your profile image"}
+                              </p>
+
+                              <p className="mt-1 text-xs text-(--text-clr-muted)">
+                                JPG, PNG or WebP
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <label
+                                htmlFor={field.name}
+                                className="cursor-pointer rounded-lg bg-(--primary-clr) px-5 py-2.5 font-semibold shadow-md transition hover:brightness-110 active:scale-95"
+                              >
+                                {selectedFile ? "Change Image" : "Select Image"}
+                              </label>
+
+                              {selectedFile && (
+                                <button
+                                  type="button"
+                                  onClick={() => field.handleChange(undefined)}
+                                  className="cursor-pointer rounded-lg border border-red-500/40 px-5 py-2.5 font-semibold text-red-500 transition hover:bg-red-500/10 active:scale-95"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </FormField>
+                      );
+                    }}
                   </updateUserForm.Field>
 
                   <hr className="border-(--primary-clr)/20 my-2" />

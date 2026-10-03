@@ -10,7 +10,7 @@ export type AuthUser = Pick<User, "id" | "email" | "role">;
 export type LoginUserDto = Pick<User, "email" | "password">;
 
 export type CreateUserDto = Pick<User, "email" | "password"> &
-  Partial<Pick<User, "phone" | "address" | "avatarUrl">>;
+  Partial<Pick<User, "phone" | "address">>;
 
 export type ForgotPasswordDto = Pick<User, "email">;
 

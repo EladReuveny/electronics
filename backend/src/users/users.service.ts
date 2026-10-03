@@ -1,13 +1,20 @@
+import { CloudinaryService } from '@app/infrastructure/cloudinary/cloudinary.service';
 import { DB_CLIENT } from '@app/infrastructure/db/db.constants';
 import {
   REDIS_CACHE_TTL_SECONDS,
   REDIS_CLIENT,
 } from '@app/infrastructure/redis/redis.constants';
 import { RedisService } from '@app/infrastructure/redis/redis.service';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { count, eq } from 'drizzle-orm';
 import Redis from 'ioredis';
+import { Logger } from 'pino-nestjs';
 import {
   carts,
   users,
@@ -18,6 +25,7 @@ import { CreateUserDto } from '../auth/dto/create-user.dto';
 import { AuthUser } from '../auth/types/auth.types';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { FILE_UPLOAD_AVATARS_FOLDER } from '@app/infrastructure/cloudinary/cloudinary.constants';
 
 @Injectable()
 export class UsersService {
@@ -26,6 +34,8 @@ export class UsersService {
     private readonly db: Db,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
     private readonly redisService: RedisService,
+    private readonly cloudinaryService: CloudinaryService,
+    private readonly logger: Logger,
   ) {}
 
   async findUserByEmail(email: string) {
@@ -111,14 +121,37 @@ export class UsersService {
     return user;
   }
 
-  async update(userId: string, updateUserDto: UpdateUserDto) {
-    if (updateUserDto.password) {
-      updateUserDto.password = await this.hashPassword(updateUserDto.password);
+  async update(
+    userId: string,
+    updateUserDto: UpdateUserDto,
+    avatarImage?: Express.Multer.File,
+  ) {
+    const formData: UpdateUserDto & { avatarUrl?: string } = {
+      ...updateUserDto,
+    };
+
+    if (formData.password) {
+      formData.password = await this.hashPassword(formData.password);
+    }
+
+    if (avatarImage) {
+      try {
+        const { secure_url } =
+          await this.cloudinaryService.uploadFile(avatarImage, FILE_UPLOAD_AVATARS_FOLDER);
+        formData.avatarUrl = secure_url;
+      } catch (err: unknown) {
+        this.logger.error(
+          `Failed to upload avatar image to Cloudinary: ${err}`,
+        );
+        throw new ServiceUnavailableException(
+          `Failed to upload avatar image to Cloudinary: ${err}`,
+        );
+      }
     }
 
     const [updatedUser] = await this.db
       .update(users)
-      .set(updateUserDto)
+      .set(formData)
       .where(eq(users.id, userId))
       .returning();
 
