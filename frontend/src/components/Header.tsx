@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { QueryClient, useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   ArrowUpDown,
@@ -10,8 +10,11 @@ import {
   LayoutGrid,
   LogIn,
   LogOut,
+  Mail,
+  MapPin,
   PackageCheck,
   PackageX,
+  Phone,
   RotateCcw,
   Search,
   ShoppingBag,
@@ -20,11 +23,13 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import z from "zod";
+import defaultAvatarProfileImage from "../../src/assets/default_avatar_profile_image.png";
 import { authApi } from "../features/auth/auth.api";
 import type { Category } from "../features/products/product.types";
+import { usersApi } from "../features/users/users.api";
 import { usersKeys } from "../features/users/users.keys";
 import { useAuthStore } from "../lib/store/auth.store";
 import { handleError } from "../lib/utils/utils";
@@ -42,13 +47,13 @@ const searchFormSchema = z.object({
 
 const navBarLinks: {
   to: string;
-  icon: React.ElementType;
+  Icon: React.ElementType;
   title: string;
   sublist?: { category: string; label: string }[];
 }[] = [
   {
     to: "/products",
-    icon: LayoutGrid,
+    Icon: LayoutGrid,
     title: "Categories",
     sublist: [
       {
@@ -69,10 +74,9 @@ const navBarLinks: {
       },
     ],
   },
-  { to: "/wishlist", icon: Heart, title: "Wishlist" },
-  { to: "/cart", icon: ShoppingCart, title: "Cart" },
-  { to: "/orders", icon: ShoppingBag, title: "Orders" },
-  { to: "/profile", icon: User, title: "Profile" },
+  { to: "/wishlist", Icon: Heart, title: "Wishlist" },
+  { to: "/cart", Icon: ShoppingCart, title: "Cart" },
+  { to: "/orders", Icon: ShoppingBag, title: "Orders" },
 ];
 
 type HeaderProps = {};
@@ -81,12 +85,34 @@ const Header = ({}: HeaderProps) => {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
-  const queryClient = new QueryClient();
+  const queryClient = useQueryClient();
+
+  const { data: userData } = useQuery({
+    queryKey: usersKeys.all,
+    queryFn: () => usersApi.findMe(),
+    enabled: !!user?.id,
+  });
 
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
   const searchDialogRef = useRef<HTMLDialogElement | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isProfileOpen && e.key === "Escape") {
+        setIsProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isProfileOpen]);
 
   const searchForm = useForm({
     defaultValues: {
@@ -162,7 +188,8 @@ const Header = ({}: HeaderProps) => {
           <Filter className="absolute right-2 top-1/2 -translate-y-1/2 bg-(--primary-clr)/10 p-1 rounded-md size-5.5" />
         </button>
 
-        <div className="flex items-center gap-5">
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-5">
           {navBarLinks.map((link, i) => (
             <div
               key={`nav-item-${i}`}
@@ -173,7 +200,7 @@ const Header = ({}: HeaderProps) => {
                   title={link.title}
                   className="cursor-pointer flex flex-col gap-0.5 items-center hover:scale-105 hover:-translate-y-0.5"
                 >
-                  <link.icon className="size-6" />
+                  <link.Icon className="size-6" />
                   {link.title}
                 </span>
               ) : (
@@ -181,8 +208,9 @@ const Header = ({}: HeaderProps) => {
                   to={link.to}
                   title={link.title}
                   className={`flex flex-col gap-0.5 items-center ${location.pathname.startsWith(link.to) ? "text-(--secondary-clr)" : ""} hover:scale-105 hover:-translate-y-0.5`}
+                  onClick={() => setIsProfileOpen(false)}
                 >
-                  <link.icon
+                  <link.Icon
                     className={`size-6 ${location.pathname.startsWith(link.to) ? "fill-(--secondary-clr)" : ""}`}
                   />
                   {link.title}
@@ -196,7 +224,8 @@ const Header = ({}: HeaderProps) => {
                       key={`link-sublist-${j}`}
                       to="/products/categories/$category"
                       params={{ category: item.category }}
-                      className="p-2 whitespace-nowrap border-l-2 border-transparent hover:border-l-(--primary-clr) hover:bg-(--primary-clr)/10 hover:text-(--primary-clr)"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="p-2 whitespace-nowrap border-l-2 border-transparent hover:border-l-(--primary-clr) hover:bg-(--primary-clr)/15 hover:text-(--primary-clr)"
                     >
                       {item.label}
                     </Link>
@@ -209,21 +238,203 @@ const Header = ({}: HeaderProps) => {
 
         <div className="flex items-center gap-4">
           {user ? (
-            <button
-              type="button"
-              onClick={() => {
-                logoutMutation.mutate(undefined, {
-                  onSuccess: (data: { message: string }) => {
-                    logout();
-                    toast.success(data.message);
-                    navigate({ to: "/login" });
-                  },
-                });
-              }}
-              className="cursor-pointer flex items-center justify-center gap-2 bg-(--text-clr) text-(--primary-clr) py-2 px-4 rounded-md hover:brightness-90 active:scale-[97%]"
-            >
-              Logout <LogOut className="size-5" />
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen((prev) => !prev)}
+                className="cursor-pointer hover:scale-105 active:scale-95"
+                title="Profile"
+              >
+                <div>
+                  <img
+                    src={userData?.avatarUrl ?? defaultAvatarProfileImage}
+                    alt="Profile Image"
+                    title="Profile Image"
+                    className="size-11 rounded-full object-cover"
+                  />
+                </div>
+              </button>
+
+              {isProfileOpen && (
+                <div className="absolute right-0 top-15 z-100 w-96 h-[calc(100vh-103px)] overflow-y-auto rounded-2xl border-2 border-(--primary-clr)/35 bg-(--bg-clr) text-(--text-clr) shadow-2xl p-4">
+                  <div className="flex items-center gap-4 border-b border-(--primary-clr)/20 bg-(--primary-clr)/5">
+                    <div className="size-16 shrink-0 overflow-hidden rounded-full border-2 border-(--primary-clr)/30">
+                      {userData?.avatarUrl ? (
+                        <img
+                          src={userData.avatarUrl}
+                          alt="Profile"
+                          className="size-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex size-full items-center justify-center bg-(--primary-clr)/10">
+                          <User className="size-8 text-(--primary-clr)" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="font-bold text-lg">
+                        {userData?.email.split("@")[0] ?? "My Account"}
+                      </p>
+
+                      <p className="truncate text-sm text-(--text-clr-muted)">
+                        {userData?.email}
+                      </p>
+
+                      {userData?.role === "ADMIN" && (
+                        <span className="bg-(--primary-clr)/15 text-(--primary-clr) text-center text-sm font-bold py-1 px-2 rounded-md block mt-1">
+                          {userData.role}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 p-2">
+                    <div className="flex items-start gap-3">
+                      <Mail className="mt-0.5 size-5 shrink-0 text-(--primary-clr)" />
+                      <div>
+                        <p className="text-xs font-semibold uppercase text-(--text-clr-muted)">
+                          Email
+                        </p>
+                        <p className="truncate text-sm">
+                          {userData?.email ?? "Not provided"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <Phone className="mt-0.5 size-5 shrink-0 text-(--primary-clr)" />
+                      <div>
+                        <p className="text-xs font-semibold uppercase text-(--text-clr-muted)">
+                          Phone
+                        </p>
+                        <p className="truncate text-sm">
+                          {userData?.phone || "Not provided"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <MapPin className="mt-0.5 size-5 shrink-0 text-(--primary-clr)" />
+                      <div>
+                        <p className="text-xs font-semibold uppercase text-(--text-clr-muted)">
+                          Address
+                        </p>
+                        <p className="text-sm">
+                          {userData?.address || "Not provided"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mobile Navigation */}
+                  <div className="md:hidden pt-3">
+                    <hr className="text-(--primary-clr)/75 my-1" />
+
+                    <div className="space-y-2">
+                      {navBarLinks.map((link, i) => {
+                        const isActive = location.pathname.startsWith(link.to);
+                        const isCategory = link.title === "Categories";
+
+                        return (
+                          <div
+                            key={`nav-item-${i}`}
+                            className={`overflow-hidden rounded-xl border bg-(--primary-clr)/5 ${
+                              isCategory
+                                ? "border-(--primary-clr)/15"
+                                : "border-(--primary-clr)/10"
+                            }`}
+                          >
+                            {isCategory ? (
+                              <div className="flex flex-col group cursor-pointer">
+                                <div className="flex items-center gap-3 px-3 py-2.5 text-(--text-clr)">
+                                  <link.Icon className="size-5 text-(--primary-clr)" />
+                                  <span className="text-sm font-semibold">
+                                    {link.title}
+                                  </span>
+                                </div>
+
+                                {(link.sublist?.length ?? 0) > 0 && (
+                                  <div className="border-t border-(--primary-clr)/10 bg-(--bg-clr) px-2 py-2 hidden group-hover:block">
+                                    <div className="grid gap-1.5">
+                                      {link.sublist?.map((item, j) => (
+                                        <Link
+                                          key={`link-sublist-${j}`}
+                                          to="/products/categories/$category"
+                                          params={{ category: item.category }}
+                                          className="border-l border-transparent px-2.5 py-2 text-sm text-(--text-clr-muted) hover:border-(--primary-clr) hover:bg-(--primary-clr)/15 hover:text-(--primary-clr)"
+                                        >
+                                          {item.label}
+                                        </Link>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <Link
+                                to={link.to}
+                                title={link.title}
+                                className={`flex items-center justify-between gap-3 px-3 py-2.5 ${
+                                  isActive
+                                    ? "bg-(--secondary-clr)/10 text-(--secondary-clr)"
+                                    : "text-(--text-clr) hover:bg-(--primary-clr)/10"
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <link.Icon
+                                    className={`size-5 ${isActive ? "fill-(--secondary-clr)" : ""}`}
+                                  />
+                                  <span className="text-sm font-semibold">
+                                    {link.title}
+                                  </span>
+                                </div>
+
+                                {isActive && (
+                                  <span className="h-2 w-2 rounded-full bg-(--secondary-clr)" />
+                                )}
+                              </Link>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <hr className="text-(--primary-clr)/75 my-1" />
+
+                  <div>
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 font-semibold hover:bg-(--primary-clr)/15"
+                    >
+                      <User className="size-5 text-(--primary-clr)" />
+                      Profile Settings
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        logoutMutation.mutate(undefined, {
+                          onSuccess: (data: { message: string }) => {
+                            logout();
+                            setIsProfileOpen(false);
+                            toast.success(data.message);
+                            navigate({ to: "/login" });
+                          },
+                        });
+                      }}
+                      disabled={logoutMutation.isPending}
+                      className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 font-semibold text-red-500 hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <LogOut className="size-5" />
+                      {logoutMutation.isPending ? "Logging out..." : "Logout"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <>
               <Link
@@ -232,6 +443,7 @@ const Header = ({}: HeaderProps) => {
               >
                 Login <LogIn className="size-5" />
               </Link>
+
               <Link
                 to="/register"
                 className="cursor-pointer flex items-center justify-center gap-2 bg-(--secondary-clr) text-(--primary-clr) py-2 px-4 rounded-md hover:brightness-110 active:scale-[97%]"

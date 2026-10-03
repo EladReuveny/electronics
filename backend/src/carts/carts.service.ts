@@ -79,7 +79,7 @@ export class CartsService {
       throw new NotFoundException(`Cart with id ${cartId} not found`);
     }
 
-    await this.redisService.invalidateCacheByKeys( [
+    await this.redisService.invalidateCacheByKeys([
       'carts',
       `carts:${cartId}`,
       `carts:users:${updatedCart.userId}`,
@@ -195,7 +195,11 @@ export class CartsService {
       });
     });
 
-    await this.redisService.invalidateCacheByKeys(['carts', `carts:${cart.id}`, `carts:users:${userId}`]);
+    await this.redisService.invalidateCacheByKeys([
+      'carts',
+      `carts:${cart.id}`,
+      `carts:users:${userId}`,
+    ]);
 
     return updatedCart;
   }
@@ -256,7 +260,11 @@ export class CartsService {
       });
     });
 
-    await this.redisService.invalidateCacheByKeys(['carts', `carts:${cart.id}`, `carts:users:${userId}`]);
+    await this.redisService.invalidateCacheByKeys([
+      'carts',
+      `carts:${cart.id}`,
+      `carts:users:${userId}`,
+    ]);
 
     return updatedCart;
   }
@@ -287,7 +295,11 @@ export class CartsService {
       return updatedcart;
     });
 
-    await this.redisService.invalidateCacheByKeys(['carts', `carts:${cart.id}`, `carts:users:${userId}`]);
+    await this.redisService.invalidateCacheByKeys([
+      'carts',
+      `carts:${cart.id}`,
+      `carts:users:${userId}`,
+    ]);
 
     return updatedcart;
   }

@@ -31,7 +31,9 @@ async function bootstrap() {
   );
 
   const PORT = configService.get<number>('PORT') ?? 3000;
-  const SERVER_URL = configService.get<string>('SERVER_URL') ?? `http://localhost:${PORT}/api/v1`;
+  const SERVER_URL =
+    configService.get<string>('SERVER_URL') ??
+    `http://localhost:${PORT}/api/v1`;
 
   await app.listen(PORT, () => {
     logger.log(

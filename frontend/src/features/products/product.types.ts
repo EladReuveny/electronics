@@ -28,5 +28,5 @@ export type ProductQueryDto = {
   maxPrice?: number;
   inStock?: boolean;
   category?: "SMART_PHONE" | "TABLET" | "LAPTOP" | "TV";
-  orderBy?: "price-asc" | "price-desc" | 'name-asc' | 'name-desc';
+  orderBy?: "price-asc" | "price-desc" | "name-asc" | "name-desc";
 };

@@ -1,5 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, lazyRouteComponent, Link } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  lazyRouteComponent,
+  Link,
+} from "@tanstack/react-router";
 import {
   ArrowRight,
   Award,

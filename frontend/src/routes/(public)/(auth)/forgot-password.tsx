@@ -38,7 +38,7 @@ function ForgotPasswordPage() {
       forgotPasswordMutation.mutate(value, {
         onSuccess: (data) => {
           toast.success(data.message);
-          forgotPasswordForm.reset()
+          forgotPasswordForm.reset();
         },
       }),
   });

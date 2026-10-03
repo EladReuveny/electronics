@@ -1,22 +1,32 @@
+import { Roles } from '@app/common/decorators/roles.decorator';
+import { JwtGuard } from '@app/common/guards/jwt.guard';
+import { RolesGuard } from '@app/common/guards/roles.guard';
+import {
+  FILE_TYPE,
+  MAX_FILE_SIZE,
+} from '@app/infrastructure/cloudinary/cloudinary.constants';
 import {
   Body,
   Controller,
   Delete,
+  FileTypeValidator,
   Get,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   Patch,
   Post,
   Put,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductQueryDto } from './dto/product-query.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductsService } from './products.service';
-import { JwtGuard } from '@app/common/guards/jwt.guard';
-import { RolesGuard } from '@app/common/guards/roles.guard';
-import { Roles } from '@app/common/decorators/roles.decorator';
 
 @Controller('products')
 export class ProductsController {
@@ -25,8 +35,24 @@ export class ProductsController {
   @Post()
   @UseGuards(JwtGuard, RolesGuard)
   @Roles('ADMIN')
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
+  @UseInterceptors(FileInterceptor('imageFile'))
+  create(
+    @Body() createProductDto: CreateProductDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({
+            fileType: FILE_TYPE,
+            skipMagicNumbersValidation: false,
+          }),
+          new MaxFileSizeValidator({ maxSize: MAX_FILE_SIZE }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    productImage?: Express.Multer.File,
+  ) {
+    return this.productsService.create(createProductDto, productImage);
   }
 
   @Get()
@@ -57,11 +83,29 @@ export class ProductsController {
   @Patch(':productId')
   @UseGuards(JwtGuard, RolesGuard)
   @Roles('ADMIN')
+  @UseInterceptors(FileInterceptor('imageFile'))
   update(
     @Param('productId') productId: string,
     @Body() updateProductDto: UpdateProductDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({
+            fileType: FILE_TYPE,
+            skipMagicNumbersValidation: false,
+          }),
+          new MaxFileSizeValidator({ maxSize: MAX_FILE_SIZE }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    productImage?: Express.Multer.File,
   ) {
-    return this.productsService.update(productId, updateProductDto);
+    return this.productsService.update(
+      productId,
+      updateProductDto,
+      productImage,
+    );
   }
 
   @Delete(':productId')

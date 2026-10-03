@@ -1,3 +1,4 @@
+import { CloudinaryModule } from '@app/infrastructure/cloudinary/cloudinary.module';
 import { NotificationsModule } from '@app/infrastructure/notifications/notifications.module';
 import { RedisModule } from '@app/infrastructure/redis/redis.module';
 import { Module } from '@nestjs/common';
@@ -42,6 +43,7 @@ import { WishlistsModule } from './wishlists/wishlists.module';
     ]),
     DbModule,
     RedisModule,
+    CloudinaryModule,
     JwtModule.registerAsync({
       global: true,
       inject: [ConfigService],

@@ -3,7 +3,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 type ThemeState = {
   theme: "dark" | "light";
-}
+};
 
 type ThemeActions = {
   toggleTheme: () => void;

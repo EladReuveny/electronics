@@ -34,7 +34,7 @@ export class AuthController {
       maxAge: this.configService.get<number>('COOKIE_MAX_AGE_MS') ?? 604800000, // 7 days by default in milliseconds
     });
 
-   return res.status(HttpStatus.OK).json(user);
+    return res.status(HttpStatus.OK).json(user);
   }
 
   @Post('register')
@@ -49,7 +49,7 @@ export class AuthController {
       maxAge: this.configService.get<number>('COOKIE_MAX_AGE_MS') ?? 604800000, // 7 days by default in milliseconds
     });
 
-     return res.status(HttpStatus.CREATED).json(user);
+    return res.status(HttpStatus.CREATED).json(user);
   }
 
   @Post('logout')
@@ -57,7 +57,9 @@ export class AuthController {
   logout(@Res() res: Response) {
     res.clearCookie('access-token');
 
-    return res.status(HttpStatus.OK).json({ message: 'Logged out successfully' });
+    return res
+      .status(HttpStatus.OK)
+      .json({ message: 'Logged out successfully' });
   }
 
   @Post('forgot-password')

@@ -1,16 +1,11 @@
 import { api } from "../../lib/api/api.config";
-import type {
-  CreateProductDto,
-  Product,
-  ProductQueryDto,
-  UpdateProductDto,
-} from "./product.types";
+import type { Product, ProductQueryDto } from "./product.types";
 
 const RESOURCE_PREFIX = "products";
 
 export const productsApi = {
-  create: async (createProductDto: CreateProductDto): Promise<Product> => {
-    const { data } = await api.post(`${RESOURCE_PREFIX}`, createProductDto);
+  create: async (formData: FormData): Promise<Product> => {
+    const { data } = await api.post(`${RESOURCE_PREFIX}`, formData);
     return data;
   },
   findAll: async (): Promise<Product[]> => {
@@ -27,13 +22,10 @@ export const productsApi = {
     const { data } = await api.get(`${RESOURCE_PREFIX}/${productId}`);
     return data;
   },
-  update: async (
-    productId: string,
-    updateProductDto: UpdateProductDto,
-  ): Promise<Product> => {
+  update: async (productId: string, formData: FormData): Promise<Product> => {
     const { data } = await api.patch(
       `${RESOURCE_PREFIX}/${productId}`,
-      updateProductDto,
+      formData,
     );
     return data;
   },

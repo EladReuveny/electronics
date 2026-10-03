@@ -2,10 +2,8 @@ import {
   IsEmail,
   IsNotEmpty,
   IsOptional,
-  IsPhoneNumber,
   IsString,
   IsStrongPassword,
-  IsUrl,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -36,8 +34,4 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   address?: string;
-
-  @IsOptional()
-  @IsUrl()
-  avatarUrl?: string;
 }

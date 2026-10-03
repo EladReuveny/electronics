@@ -1,8 +1,16 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Edit, FileText, Heart, Save, ShoppingCart, X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import {
+  Edit,
+  FileText,
+  Heart,
+  Save,
+  ShoppingCart,
+  Trash,
+  X,
+} from "lucide-react";
+import { useRef } from "react";
 import { toast } from "react-toastify";
 import { z } from "zod";
 import FormField from "../../../components/FormField";
@@ -19,14 +27,48 @@ import { wishlistsKeys } from "../../../features/wishlists/wishlists.keys";
 import { useAuthStore } from "../../../lib/store/auth.store";
 import { handleError } from "../../../lib/utils/utils";
 
-const editProductSchema = z.object({
-  name: z.string().min(2, "Name is too short"),
-  description: z.string().min(5, "Description is too short"),
-  price: z.number().min(0, "Price must be positive"),
-  imageUrl: z.url("Invalid URL"),
-  stockQuantity: z.number().min(0),
-  category: z.enum(["SMART_PHONE", "TABLET", "LAPTOP", "TV"]),
-});
+const editProductFormSchema = z
+  .object({
+    name: z.string().trim().min(2, "Name is too short"),
+    description: z.string().trim().min(5, "Description is too short"),
+    price: z.number().min(0, "Price must be positive"),
+    imageUrl: z
+      .string()
+      .trim()
+      .optional()
+      .catch("")
+      .refine(
+        (value = "") => {
+          const trimmed = value.trim();
+
+          if (!trimmed) return true;
+
+          if (/^https?:\/\//i.test(trimmed)) return true;
+
+          return /^data:image\/[a-z0-9.+-]+(?:;[a-z0-9.+-]+=[a-z0-9.+-]+)*(?:;base64)?,/i.test(
+            trimmed,
+          );
+        },
+        { message: "Image URL must be a valid URL or data image source." },
+      ),
+    stockQuantity: z.number().min(0, "Stock quantity must be positive"),
+    category: z.enum(["SMART_PHONE", "TABLET", "LAPTOP", "TV"]),
+    productImage: z.file("Invalid file").optional(),
+  })
+  .superRefine((value, ctx) => {
+    const hasLocalFile = value.productImage instanceof File;
+    const imageUrl = (value.imageUrl ?? "").trim();
+
+    if (!hasLocalFile && !imageUrl) {
+      ctx.addIssue({
+        path: ["imageUrl"],
+        code: "custom",
+        message: "Image URL is required or upload a file.",
+      });
+    }
+  });
+
+type EditProductFormType = z.infer<typeof editProductFormSchema>;
 
 export const Route = createFileRoute("/(public)/products/$productId")({
   component: ProductDetailsPage,
@@ -94,37 +136,28 @@ function ProductDetailsPage() {
   const updateProductMutation = useMutation({
     mutationFn: ({
       productId,
-      productUpdateDto,
+      formData,
     }: {
       productId: string;
-      productUpdateDto: Parameters<typeof productsApi.update>[1];
-    }) => productsApi.update(productId, productUpdateDto),
+      formData: FormData;
+    }) => productsApi.update(productId, formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productsKeys.all });
-      queryClient.invalidateQueries({
-        queryKey: productsKeys.detail(productId ?? ""),
-      });
+    },
+    onError: (err) => {
+      editProductDialog.current?.close();
+      handleError(err);
+    },
+  });
+
+  const removeProductMutation = useMutation({
+    mutationFn: ({ productId }: { productId: string }) =>
+      productsApi.remove(productId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productsKeys.all });
     },
     onError: (err) => handleError(err),
   });
-
-  useEffect(() => {
-    const closeEditProductDialog = (e: MouseEvent) => {
-      if (
-        editProductDialog.current &&
-        editProductDialog.current.open &&
-        e.target === editProductDialog.current
-      ) {
-        editProductDialog.current?.close();
-      }
-    };
-
-    document.addEventListener("click", closeEditProductDialog);
-
-    return () => {
-      document.removeEventListener("click", closeEditProductDialog);
-    };
-  }, []);
 
   const handleToggleProductInWishlist = (productId: string) => {
     if (!user) {
@@ -140,6 +173,8 @@ function ProductDetailsPage() {
     }
   };
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const editProductForm = useForm({
     defaultValues: {
       name: product?.name ?? "",
@@ -148,22 +183,62 @@ function ProductDetailsPage() {
       imageUrl: product?.imageUrl ?? "",
       stockQuantity: product?.stockQuantity ?? 0,
       category: product?.category ?? "SMART_PHONE",
-    },
+      productImage: undefined,
+    } as EditProductFormType,
     validators: {
-      onChange: editProductSchema,
-      onBlur: editProductSchema,
-      onSubmit: editProductSchema,
+      onChange: editProductFormSchema,
+      onBlur: editProductFormSchema,
+      onSubmit: editProductFormSchema,
     },
-    onSubmit: ({ value }) => {
-      updateProductMutation.mutate({
-        productId: String(productId),
-        productUpdateDto: value,
-      });
-      editProductDialog.current?.close();
+    onSubmit: async ({ value }) => {
+      const formData = new FormData();
+
+      if (value.name) {
+        formData.append("name", value.name);
+      }
+
+      if (value.description) {
+        formData.append("description", value.description);
+      }
+
+      if (value.price) {
+        formData.append("price", String(value.price));
+      }
+
+      if (value.stockQuantity) {
+        formData.append("stockQuantity", String(value.stockQuantity));
+      }
+
+      if (value.category) {
+        formData.append("category", value.category);
+      }
+
+      if (value.imageUrl?.trim()) {
+        formData.append("imageUrl", value.imageUrl.trim());
+      }
+
+      if (value.productImage instanceof File) {
+        formData.append("imageFile", value.productImage);
+      }
+
+      updateProductMutation.mutate(
+        {
+          productId,
+          formData,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Product updated successfully.");
+            editProductDialog.current?.close();
+          },
+        },
+      );
     },
   });
 
-  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleAddProductToCartSubmit = (
+    e: React.SubmitEvent<HTMLFormElement>,
+  ) => {
     e.preventDefault();
 
     if (!user) {
@@ -176,11 +251,40 @@ function ProductDetailsPage() {
 
     addProductToCartMutation.mutate(
       {
-        productId: String(productId),
+        productId,
         quantity: Number(formData.get("quantity")),
       },
       {
         onSuccess: () => navigate({ to: "/cart" }),
+      },
+    );
+  };
+
+  const resetEditProductForm = () => {
+    editProductForm.reset();
+  };
+
+  const clearSelectedProductImage = () => {
+    editProductForm.setFieldValue("productImage", undefined);
+    editProductForm.setFieldValue("imageUrl", product?.imageUrl ?? "");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveProduct = async () => {
+    if (!confirm("Are you sure you want to delete this product?")) {
+      return;
+    }
+
+    removeProductMutation.mutate(
+      { productId },
+      {
+        onSuccess: () => {
+          navigate({ to: "/products" });
+          toast.success("Product deleted successfully");
+        },
       },
     );
   };
@@ -199,13 +303,26 @@ function ProductDetailsPage() {
       <PageTitle title="Product Details" />
 
       {user?.role === "ADMIN" && (
-        <button
-          type="button"
-          className="ml-auto outline-none cursor-pointer flex items-center gap-2 bg-(--primary-clr) py-2 px-6 rounded-lg mb-6 hover:brightness-110 active:scale-[97%]"
-          onClick={() => editProductDialog.current?.showModal()}
-        >
-          Edit Product <Edit className="size-5" />
-        </button>
+        <div className="flex items-center justify-end gap-3">
+          <button
+            type="button"
+            className="cursor-pointer flex items-center justify-center gap-2 bg-red-500/10 text-red-500 py-2.5 px-6 rounded-xl font-bold border-2 border-red-500/20 hover:bg-red-500/20 active:scale-[97%] disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleRemoveProduct}
+          >
+            <Trash className="size-5" />
+            Remove Product
+          </button>
+          <button
+            type="button"
+            className="cursor-pointer flex items-center gap-2 bg-(--primary-clr) py-2.5 px-6 rounded-xl font-bold hover:brightness-110 active:scale-[97%] shadow-lg"
+            onClick={() => {
+              resetEditProductForm();
+              editProductDialog.current?.showModal();
+            }}
+          >
+            Edit Product <Edit className="size-5" />
+          </button>
+        </div>
       )}
 
       <div className="flex flex-col md:flex-row gap-12 bg-(--primary-clr)/5 rounded-2xl p-6 border border-(--primary-clr)/30">
@@ -236,7 +353,7 @@ function ProductDetailsPage() {
         </div>
 
         <form
-          onSubmit={(e) => handleSubmit(e)}
+          onSubmit={handleAddProductToCartSubmit}
           className="flex flex-col justify-between flex-1"
         >
           <div>
@@ -299,7 +416,7 @@ function ProductDetailsPage() {
 
       <dialog
         ref={editProductDialog}
-        className="bg-(--bg-clr) text-(--text-clr) fixed top-1/2 left-1/2 -translate-1/2 p-8 rounded-xl w-3/4 backdrop:backdrop-blur-md shadow-2xl border-2 border-(--primary-clr)/30"
+        className="bg-(--bg-clr) text-(--text-clr) fixed top-1/2 left-1/2 -translate-1/2 p-8 rounded-xl w-[min(90vw,760px)] max-w-full backdrop:backdrop-blur-md shadow-2xl border-2 border-(--primary-clr)/30 overflow-x-hidden"
         onClick={(e) => {
           if (e.target === editProductDialog.current)
             editProductDialog.current?.close();
@@ -388,14 +505,167 @@ function ProductDetailsPage() {
               </div>
 
               <editProductForm.Field name="imageUrl">
-                {(field) => (
-                  <FormField
-                    field={field}
-                    label="Image URL"
-                    type="url"
-                    required
-                  />
-                )}
+                {(field) => {
+                  const selectedFile =
+                    editProductForm.state.values.productImage ?? undefined;
+                  const errorMessage =
+                    field.state.meta.errors.length > 0
+                      ? field.state.meta.errors
+                          .map((error) =>
+                            typeof error === "object" &&
+                            error &&
+                            "message" in error
+                              ? String((error as { message?: unknown }).message)
+                              : String(error),
+                          )
+                          .join(", ")
+                      : "";
+
+                  return (
+                    <div className="space-y-4 rounded-xl border-2 border-(--primary-clr)/20 bg-(--primary-clr)/5 p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-[0.18em] text-(--primary-clr)">
+                            Product image
+                          </p>
+                          <p className="text-xs text-(--text-clr-muted)">
+                            Choose how you want to provide the image.
+                          </p>
+                        </div>
+                        <div
+                          className="flex items-center gap-2 rounded-full border border-(--primary-clr)/20 bg-(--bg-clr) px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-(--text-clr-muted)
+                        "
+                        >
+                          {selectedFile ? "File selected" : "URL or file"}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label
+                          htmlFor={field.name}
+                          className="text-sm font-semibold text-(--primary-clr)"
+                        >
+                          Public image URL
+                        </label>
+                        <div className="relative">
+                          <input
+                            id={field.name}
+                            name={field.name}
+                            type="url"
+                            value={field.state.value ?? ""}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            onBlur={field.handleBlur}
+                            required={!selectedFile}
+                            placeholder="https://example.com/image.jpg"
+                            className="peer w-full py-2.75 px-3 border-2 border-(--primary-clr)/30 rounded-lg outline-none focus:border-(--secondary-clr) bg-(--bg-clr) pr-3"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="h-px flex-1 bg-(--primary-clr)/20" />
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-(--text-clr-muted)">
+                          or
+                        </span>
+                        <div className="h-px flex-1 bg-(--primary-clr)/20" />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-(--primary-clr)">
+                          Upload from your computer
+                        </label>
+
+                        <div className="rounded-xl border-2 border-dashed border-(--primary-clr)/30 bg-(--bg-clr) p-4">
+                          <input
+                            ref={fileInputRef}
+                            id="product-image-upload"
+                            name="product-image-upload"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+
+                              if (!file) {
+                                clearSelectedProductImage();
+                                return;
+                              }
+
+                              editProductForm.setFieldValue(
+                                "productImage",
+                                file,
+                              );
+                              editProductForm.setFieldValue("imageUrl", "");
+                              field.handleChange("");
+                              e.target.value = "";
+                            }}
+                            onBlur={field.handleBlur}
+                          />
+
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className="size-14 shrink-0 overflow-hidden rounded-xl border border-(--primary-clr)/20 bg-(--bg-clr)">
+                                {selectedFile ? (
+                                  <img
+                                    src={URL.createObjectURL(selectedFile)}
+                                    alt="Selected product preview"
+                                    className="size-full object-cover"
+                                  />
+                                ) : (
+                                  <img
+                                    src={field.state.value || product?.imageUrl}
+                                    alt={product?.name}
+                                    className="size-full object-cover"
+                                  />
+                                )}
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold text-(--text-clr)">
+                                  {selectedFile
+                                    ? selectedFile.name
+                                    : field.state.value
+                                      ? "Using public URL"
+                                      : "No file selected yet"}
+                                </p>
+                                <p className="mt-1 text-xs text-(--text-clr-muted)">
+                                  JPG, PNG, or WebP up to 5MB.
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <label
+                                htmlFor="product-image-upload"
+                                className="cursor-pointer rounded-lg bg-(--primary-clr) px-3.5 py-2 text-sm font-semibold text-(--text-clr) shadow-sm transition hover:brightness-110 active:scale-[97%]"
+                              >
+                                Choose file
+                              </label>
+
+                              {selectedFile && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    clearSelectedProductImage();
+                                  }}
+                                  className="cursor-pointer rounded-lg border border-red-500/40 px-3.5 py-2 text-sm font-semibold text-red-500 transition hover:bg-red-500/10 active:scale-[97%]"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {field.state.meta.isTouched && errorMessage && (
+                        <em className="text-xs text-red-500 font-medium ml-1">
+                          {String(errorMessage)}
+                        </em>
+                      )}
+                    </div>
+                  );
+                }}
               </editProductForm.Field>
 
               <editProductForm.Field name="category">
@@ -452,7 +722,17 @@ function ProductDetailsPage() {
                     {field.state.meta.isTouched &&
                       field.state.meta.errors.length > 0 && (
                         <em className="text-xs text-red-500 font-medium ml-1">
-                          {(field.state.meta.errors[0] as Error).message}
+                          {field.state.meta.errors
+                            .map((error) =>
+                              typeof error === "object" &&
+                              error &&
+                              "message" in error
+                                ? String(
+                                    (error as { message?: unknown }).message,
+                                  )
+                                : String(error),
+                            )
+                            .join(", ")}
                         </em>
                       )}
                   </div>
@@ -463,7 +743,7 @@ function ProductDetailsPage() {
             <div className="mt-6 flex items-center gap-4">
               <button
                 type="reset"
-                onClick={() => editProductForm.reset()}
+                onClick={resetEditProductForm}
                 className="cursor-pointer py-3 px-6 rounded-lg font-bold border border-(--primary-clr)/30 hover:bg-(--text-clr)/10 active:scale-[97%]"
               >
                 Reset

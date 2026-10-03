@@ -1,13 +1,24 @@
 import type { AnyFieldApi } from "@tanstack/react-form";
-import React from "react";
+import React, { type HTMLInputTypeAttribute } from "react";
 
 type FormFieldProps = {
   field: AnyFieldApi;
   label: string;
   children?: React.ReactNode;
-  type?: string;
+  type?: HTMLInputTypeAttribute;
   required?: boolean;
   [key: string]: unknown;
+};
+
+const getFieldErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  if (typeof error === "object" && error && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") return message;
+  }
+
+  return JSON.stringify(error);
 };
 
 const FormField = ({
@@ -28,8 +39,17 @@ const FormField = ({
             id={field.name}
             name={field.name}
             type={type}
-            value={field.state.value}
-            onChange={(e) => field.handleChange(e.target.value)}
+            {...(type !== "file" && {
+              value: field.state.value,
+            })}
+            onChange={(e) => {
+              if (type === "file") {
+                const file = e.target.files?.[0];
+                field.handleChange(file);
+              } else {
+                field.handleChange(e.target.value);
+              }
+            }}
             onBlur={field.handleBlur}
             required={required}
             placeholder=""
@@ -48,7 +68,9 @@ const FormField = ({
       </div>
       {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
         <em className="text-xs text-red-500 font-medium ml-1">
-          {(field.state.meta.errors[0] as Error).message}
+          {field.state.meta.errors
+            .map((error) => getFieldErrorMessage(error))
+            .join(", ")}
         </em>
       )}
     </div>

@@ -2,7 +2,7 @@ import { api } from "../../lib/api/api.config";
 import type { Cart } from "../carts/cart.types";
 import type { Order } from "../orders/order.types";
 import type { Wishlist } from "../wishlists/wishlist.types";
-import type { UpdateUserDto, User } from "./user.types";
+import type { Role, User } from "./user.types";
 
 const RESOURCE_PREFIX = "users";
 
@@ -15,14 +15,17 @@ export const usersApi = {
     const { data } = await api.get(`${RESOURCE_PREFIX}/me`);
     return data;
   },
-  update: async (
+  update: async (userId: string, formData: FormData): Promise<User> => {
+    const { data } = await api.patch(`${RESOURCE_PREFIX}/${userId}`, formData);
+    return data;
+  },
+  updateUserRole: async (
     userId: string,
-    updateUserDto: UpdateUserDto,
-  ): Promise<User> => {
-    const { data } = await api.put(
-      `${RESOURCE_PREFIX}/${userId}/update`,
-      updateUserDto,
-    );
+    role: Role,
+  ): Promise<{ message: string }> => {
+    const { data } = await api.patch(`${RESOURCE_PREFIX}/${userId}/role`, {
+      role,
+    });
     return data;
   },
   remove: async (userId: string): Promise<{ message: string }> => {

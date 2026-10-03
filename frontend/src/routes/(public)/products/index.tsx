@@ -1,6 +1,10 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, lazyRouteComponent, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  lazyRouteComponent,
+  useNavigate,
+} from "@tanstack/react-router";
 import { FileText, Plus, RotateCcw, Save, Trash, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
@@ -12,7 +16,6 @@ import ProductCard from "../../../components/ProductCard";
 import ProductCardSkeleton from "../../../components/ProductCardSkeleton";
 import type {
   Category,
-  Product,
   ProductQueryDto,
 } from "../../../features/products/product.types";
 import { productsApi } from "../../../features/products/products.api";
@@ -43,14 +46,49 @@ const productSearchSchema = z.object({
     .catch(""),
 });
 
-const addProductSchema = z.object({
-  name: z.string().min(2, "Name is too short"),
-  description: z.string().min(5, "Description is too short"),
-  price: z.number().min(0, "Price must be positive"),
-  imageUrl: z.url("Invalid URL"),
-  stockQuantity: z.number().min(0),
-  category: z.enum(["SMART_PHONE", "TABLET", "LAPTOP", "TV"]),
-});
+const isValidProductImageSource = (value: string) => {
+  const trimmed = value.trim();
+
+  if (!trimmed) return true;
+
+  if (/^https?:\/\//i.test(trimmed)) return true;
+
+  return /^data:image\/[a-z0-9.+-]+(?:;[a-z0-9.+-]+=[a-z0-9.+-]+)*(?:;base64)?,/i.test(
+    trimmed,
+  );
+};
+
+const addProductFormSchema = z
+  .object({
+    name: z.string().trim(),
+    description: z.string().trim().optional(),
+    price: z.number().min(0, "Price must be positive"),
+    imageUrl: z
+      .string()
+      .trim()
+      .optional()
+      .catch("")
+      .refine((value = "") => isValidProductImageSource(value), {
+        message: "Image URL must be a valid URL or data image source.",
+      }),
+    stockQuantity: z.number().min(0, "Stock quantity must be positive"),
+    category: z.enum(["SMART_PHONE", "TABLET", "LAPTOP", "TV"]),
+    productImage: z.file("Invalid file").optional(),
+  })
+  .superRefine((value, ctx) => {
+    const hasLocalFile = value.productImage instanceof File;
+    const imageUrl = (value.imageUrl ?? "").trim();
+
+    if (!hasLocalFile && !imageUrl) {
+      ctx.addIssue({
+        path: ["imageUrl"],
+        code: "custom",
+        message: "Image URL is required or upload a file.",
+      });
+    }
+  });
+
+type AddProductFormType = z.infer<typeof addProductFormSchema>;
 
 const CATEGORY_NAMES: Record<Category, string> = {
   SMART_PHONE: "Smart Phones",
@@ -162,10 +200,13 @@ function ProductsPage() {
   });
 
   const addProductMutation = useMutation({
-    mutationFn: (product: Product) => productsApi.create(product),
+    mutationFn: (formData: FormData) => productsApi.create(formData),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: productsKeys.all }),
-    onError: (err) => handleError(err),
+    onError: (err) => {
+      addProductDialog.current?.close();
+      handleError(err);
+    },
   });
 
   const [selectedProductsIds, setSelectedProductsIds] = useState<string[]>([]);
@@ -176,6 +217,25 @@ function ProductsPage() {
     } else {
       setSelectedProductsIds((prev) => [...prev, productId]);
     }
+  };
+
+  const handleRemoveSelectedProducts = () => {
+    if (
+      !confirm(
+        `Are you sure you want to remove ${selectedProductsIds.length} products?`,
+      )
+    ) {
+      return;
+    }
+
+    removeSelectedProductsMutation.mutate(selectedProductsIds, {
+      onSuccess: () => {
+        toast.success(
+          `${selectedProductsIds.length} Products removed successfully.`,
+        );
+      },
+    });
+    setSelectedProductsIds([]);
   };
 
   const handleToggleProductInWishlist = (productId: string) => {
@@ -192,6 +252,8 @@ function ProductsPage() {
     }
   };
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const addProductForm = useForm({
     defaultValues: {
       name: "",
@@ -200,21 +262,62 @@ function ProductsPage() {
       imageUrl: "",
       stockQuantity: 0,
       category: "SMART_PHONE" as Category,
-    },
+      productImage: undefined as File | undefined,
+    } as AddProductFormType,
     validators: {
-      onChange: addProductSchema,
-      onBlur: addProductSchema,
-      onSubmit: addProductSchema,
+      onChange: addProductFormSchema,
+      onBlur: addProductFormSchema,
+      onSubmit: addProductFormSchema,
     },
     onSubmit: ({ value }) => {
-      addProductMutation.mutateAsync(value as Product, {
+      const formData = new FormData();
+
+      if (value.name) {
+        formData.append("name", value.name);
+      }
+
+      if (value.description) {
+        formData.append("description", value.description);
+      }
+
+      if (value.price) {
+        formData.append("price", String(value.price));
+      }
+
+      if (value.stockQuantity) {
+        formData.append("stockQuantity", String(value.stockQuantity));
+      }
+
+      if (value.category) {
+        formData.append("category", value.category);
+      }
+
+      if (value.imageUrl?.trim()) {
+        formData.append("imageUrl", value.imageUrl.trim());
+      }
+
+      if (value.productImage instanceof File) {
+        formData.append("imageFile", value.productImage);
+      }
+
+      addProductMutation.mutate(formData, {
         onSuccess: () => {
           addProductDialog.current?.close();
+          toast.success("Product added successfully.");
           addProductForm.reset();
         },
       });
     },
   });
+
+  const clearSelectedProductImage = () => {
+    addProductForm.setFieldValue("productImage", undefined);
+    addProductForm.setFieldValue("imageUrl", "");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const hasActiveFilters = Boolean(
     q ||
@@ -382,19 +485,8 @@ function ProductsPage() {
             <button
               type="button"
               disabled={selectedProductsIds.length === 0}
-              className="cursor-pointer flex items-center justify-center gap-2 bg-red-500/10 text-red-500 py-2.5 px-6 rounded-xl font-bold border-2 border-red-500/20 hover:bg-red-500 active:scale-[97%] disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={() => {
-                if (
-                  !confirm(
-                    `Are you sure you want to remove ${selectedProductsIds.length} products?`,
-                  )
-                ) {
-                  return;
-                }
-
-                removeSelectedProductsMutation.mutate(selectedProductsIds);
-                setSelectedProductsIds([]);
-              }}
+              className="cursor-pointer flex items-center justify-center gap-2 bg-red-500/10 text-red-500 py-2.5 px-6 rounded-xl font-bold border-2 border-red-500/20 hover:bg-red-500/20 active:scale-[97%] disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleRemoveSelectedProducts}
             >
               <Trash className="size-5" />
               Remove Selected
@@ -489,7 +581,6 @@ function ProductsPage() {
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
                       onBlur={field.handleBlur}
-                      required
                       placeholder=" "
                       rows={3}
                       className="peer w-full py-2.5 px-3 border-2 border-(--primary-clr)/20 rounded-lg outline-none focus:border-(--secondary-clr) focus:bg-transparent  resize-none"
@@ -532,14 +623,162 @@ function ProductsPage() {
               </div>
 
               <addProductForm.Field name="imageUrl">
-                {(field) => (
-                  <FormField
-                    field={field}
-                    label="Image URL"
-                    type="url"
-                    required
-                  />
-                )}
+                {(field) => {
+                  const selectedFile =
+                    addProductForm.state.values.productImage ?? undefined;
+                  const errorMessage =
+                    field.state.meta.errors.length > 0
+                      ? field.state.meta.errors
+                          .map((error) =>
+                            typeof error === "object" &&
+                            error &&
+                            "message" in error
+                              ? String((error as { message?: unknown }).message)
+                              : String(error),
+                          )
+                          .join(", ")
+                      : "";
+
+                  return (
+                    <div className="space-y-4 rounded-xl border-2 border-(--primary-clr)/20 bg-(--primary-clr)/5 p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-[0.18em] text-(--primary-clr)">
+                            Product image
+                          </p>
+                          <p className="text-xs text-(--text-clr-muted)">
+                            Choose how you want to provide the image.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 rounded-full border border-(--primary-clr)/20 bg-(--bg-clr) px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-(--text-clr-muted)">
+                          {selectedFile ? "File selected" : "URL or file"}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label
+                          htmlFor={field.name}
+                          className="text-sm font-semibold text-(--primary-clr)"
+                        >
+                          Public image URL
+                        </label>
+                        <div className="relative">
+                          <input
+                            id={field.name}
+                            name={field.name}
+                            type="url"
+                            value={field.state.value ?? ""}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            onBlur={field.handleBlur}
+                            required={!selectedFile}
+                            placeholder="https://example.com/image.jpg"
+                            className="peer w-full py-2.75 px-3 border-2 border-(--primary-clr)/30 rounded-lg outline-none focus:border-(--secondary-clr) bg-(--bg-clr) pr-3"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="h-px flex-1 bg-(--primary-clr)/20" />
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-(--text-clr-muted)">
+                          or
+                        </span>
+                        <div className="h-px flex-1 bg-(--primary-clr)/20" />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-(--primary-clr)">
+                          Upload from your computer
+                        </label>
+
+                        <div className="rounded-xl border-2 border-dashed border-(--primary-clr)/30 bg-(--bg-clr) p-4">
+                          <input
+                            ref={fileInputRef}
+                            id="product-image-upload"
+                            name="product-image-upload"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+
+                              if (!file) {
+                                clearSelectedProductImage();
+                                return;
+                              }
+
+                              addProductForm.setFieldValue(
+                                "productImage",
+                                file,
+                              );
+                              addProductForm.setFieldValue("imageUrl", "");
+                              field.handleChange("");
+                              e.target.value = "";
+                            }}
+                            onBlur={field.handleBlur}
+                          />
+
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className="size-14 shrink-0 overflow-hidden rounded-xl border border-(--primary-clr)/20 bg-(--bg-clr)">
+                                {selectedFile ? (
+                                  <img
+                                    src={URL.createObjectURL(selectedFile)}
+                                    alt="Selected product preview"
+                                    className="size-full object-cover"
+                                  />
+                                ) : (
+                                  <img
+                                    src={field.state.value || ""}
+                                    alt="Product preview"
+                                    className="size-full object-cover"
+                                  />
+                                )}
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold text-(--text-clr)">
+                                  {selectedFile
+                                    ? selectedFile.name
+                                    : field.state.value
+                                      ? "Using public URL"
+                                      : "No file selected yet"}
+                                </p>
+                                <p className="mt-1 text-xs text-(--text-clr-muted)">
+                                  JPG, PNG, or WebP up to 5MB.
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <label
+                                htmlFor="product-image-upload"
+                                className="cursor-pointer rounded-lg bg-(--primary-clr) px-3.5 py-2 text-sm font-semibold text-(--text-clr) shadow-sm transition hover:brightness-110 active:scale-[97%]"
+                              >
+                                Choose file
+                              </label>
+
+                              {selectedFile && (
+                                <button
+                                  type="button"
+                                  onClick={clearSelectedProductImage}
+                                  className="cursor-pointer rounded-lg border border-red-500/40 px-3.5 py-2 text-sm font-semibold text-red-500 transition hover:bg-red-500/10 active:scale-[97%]"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {field.state.meta.isTouched && errorMessage && (
+                        <em className="text-xs text-red-500 font-medium ml-1">
+                          {String(errorMessage)}
+                        </em>
+                      )}
+                    </div>
+                  );
+                }}
               </addProductForm.Field>
 
               <addProductForm.Field name="category">
