@@ -8,298 +8,298 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as protectedRouteRouteImport } from './routes/(protected)/route'
-import { Route as publicRouteRouteImport } from './routes/(public)/route'
-import { Route as publicIndexRouteImport } from './routes/(public)/index'
-import { Route as protectedCartIndexRouteImport } from './routes/(protected)/cart/index'
-import { Route as protectedOrdersIndexRouteImport } from './routes/(protected)/orders/index'
-import { Route as protectedProfileIndexRouteImport } from './routes/(protected)/profile/index'
-import { Route as protectedWishlistIndexRouteImport } from './routes/(protected)/wishlist/index'
-import { Route as publicauthForgotPasswordRouteImport } from './routes/(public)/(auth)/forgot-password'
-import { Route as publicauthLoginRouteImport } from './routes/(public)/(auth)/login'
-import { Route as publicauthRegisterRouteImport } from './routes/(public)/(auth)/register'
-import { Route as publicauthResetPasswordRouteImport } from './routes/(public)/(auth)/reset-password'
-import { Route as publicProductsIndexRouteImport } from './routes/(public)/products/index'
-import { Route as publicProductsProductIdRouteImport } from './routes/(public)/products/$productId'
-import { Route as publicProductsCategoriesCategoryRouteImport } from './routes/(public)/products/categories/$category'
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as protectedRouteRouteImport } from "./routes/(protected)/route";
+import { Route as publicRouteRouteImport } from "./routes/(public)/route";
+import { Route as publicIndexRouteImport } from "./routes/(public)/index";
+import { Route as protectedCartIndexRouteImport } from "./routes/(protected)/cart/index";
+import { Route as protectedOrdersIndexRouteImport } from "./routes/(protected)/orders/index";
+import { Route as protectedProfileIndexRouteImport } from "./routes/(protected)/profile/index";
+import { Route as protectedWishlistIndexRouteImport } from "./routes/(protected)/wishlist/index";
+import { Route as publicauthForgotPasswordRouteImport } from "./routes/(public)/(auth)/forgot-password";
+import { Route as publicauthLoginRouteImport } from "./routes/(public)/(auth)/login";
+import { Route as publicauthRegisterRouteImport } from "./routes/(public)/(auth)/register";
+import { Route as publicauthResetPasswordRouteImport } from "./routes/(public)/(auth)/reset-password";
+import { Route as publicProductsIndexRouteImport } from "./routes/(public)/products/index";
+import { Route as publicProductsProductIdRouteImport } from "./routes/(public)/products/$productId";
+import { Route as publicProductsCategoriesCategoryRouteImport } from "./routes/(public)/products/categories/$category";
 
 const protectedRouteRoute = protectedRouteRouteImport.update({
-  id: '/(protected)',
+  id: "/(protected)",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const publicRouteRoute = publicRouteRouteImport.update({
-  id: '/(public)',
+  id: "/(public)",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const publicIndexRoute = publicIndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => publicRouteRoute,
-} as any)
+} as any);
 const protectedCartIndexRoute = protectedCartIndexRouteImport.update({
-  id: '/cart/',
-  path: '/cart/',
+  id: "/cart/",
+  path: "/cart/",
   getParentRoute: () => protectedRouteRoute,
-} as any)
+} as any);
 const protectedOrdersIndexRoute = protectedOrdersIndexRouteImport.update({
-  id: '/orders/',
-  path: '/orders/',
+  id: "/orders/",
+  path: "/orders/",
   getParentRoute: () => protectedRouteRoute,
-} as any)
+} as any);
 const protectedProfileIndexRoute = protectedProfileIndexRouteImport.update({
-  id: '/profile/',
-  path: '/profile/',
+  id: "/profile/",
+  path: "/profile/",
   getParentRoute: () => protectedRouteRoute,
-} as any)
+} as any);
 const protectedWishlistIndexRoute = protectedWishlistIndexRouteImport.update({
-  id: '/wishlist/',
-  path: '/wishlist/',
+  id: "/wishlist/",
+  path: "/wishlist/",
   getParentRoute: () => protectedRouteRoute,
-} as any)
+} as any);
 const publicauthForgotPasswordRoute =
   publicauthForgotPasswordRouteImport.update({
-    id: '/(auth)/forgot-password',
-    path: '/forgot-password',
+    id: "/(auth)/forgot-password",
+    path: "/forgot-password",
     getParentRoute: () => publicRouteRoute,
-  } as any)
+  } as any);
 const publicauthLoginRoute = publicauthLoginRouteImport.update({
-  id: '/(auth)/login',
-  path: '/login',
+  id: "/(auth)/login",
+  path: "/login",
   getParentRoute: () => publicRouteRoute,
-} as any)
+} as any);
 const publicauthRegisterRoute = publicauthRegisterRouteImport.update({
-  id: '/(auth)/register',
-  path: '/register',
+  id: "/(auth)/register",
+  path: "/register",
   getParentRoute: () => publicRouteRoute,
-} as any)
+} as any);
 const publicauthResetPasswordRoute = publicauthResetPasswordRouteImport.update({
-  id: '/(auth)/reset-password',
-  path: '/reset-password',
+  id: "/(auth)/reset-password",
+  path: "/reset-password",
   getParentRoute: () => publicRouteRoute,
-} as any)
+} as any);
 const publicProductsIndexRoute = publicProductsIndexRouteImport.update({
-  id: '/products/',
-  path: '/products/',
+  id: "/products/",
+  path: "/products/",
   getParentRoute: () => publicRouteRoute,
-} as any)
+} as any);
 const publicProductsProductIdRoute = publicProductsProductIdRouteImport.update({
-  id: '/products/$productId',
-  path: '/products/$productId',
+  id: "/products/$productId",
+  path: "/products/$productId",
   getParentRoute: () => publicRouteRoute,
-} as any)
+} as any);
 const publicProductsCategoriesCategoryRoute =
   publicProductsCategoriesCategoryRouteImport.update({
-    id: '/products/categories/$category',
-    path: '/products/categories/$category',
+    id: "/products/categories/$category",
+    path: "/products/categories/$category",
     getParentRoute: () => publicRouteRoute,
-  } as any)
+  } as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof publicIndexRoute
-  '/forgot-password': typeof publicauthForgotPasswordRoute
-  '/login': typeof publicauthLoginRoute
-  '/register': typeof publicauthRegisterRoute
-  '/reset-password': typeof publicauthResetPasswordRoute
-  '/products/$productId': typeof publicProductsProductIdRoute
-  '/cart/': typeof protectedCartIndexRoute
-  '/orders/': typeof protectedOrdersIndexRoute
-  '/profile/': typeof protectedProfileIndexRoute
-  '/wishlist/': typeof protectedWishlistIndexRoute
-  '/products/': typeof publicProductsIndexRoute
-  '/products/categories/$category': typeof publicProductsCategoriesCategoryRoute
+  "/": typeof publicIndexRoute;
+  "/forgot-password": typeof publicauthForgotPasswordRoute;
+  "/login": typeof publicauthLoginRoute;
+  "/register": typeof publicauthRegisterRoute;
+  "/reset-password": typeof publicauthResetPasswordRoute;
+  "/products/$productId": typeof publicProductsProductIdRoute;
+  "/cart/": typeof protectedCartIndexRoute;
+  "/orders/": typeof protectedOrdersIndexRoute;
+  "/profile/": typeof protectedProfileIndexRoute;
+  "/wishlist/": typeof protectedWishlistIndexRoute;
+  "/products/": typeof publicProductsIndexRoute;
+  "/products/categories/$category": typeof publicProductsCategoriesCategoryRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof publicIndexRoute
-  '/forgot-password': typeof publicauthForgotPasswordRoute
-  '/login': typeof publicauthLoginRoute
-  '/register': typeof publicauthRegisterRoute
-  '/reset-password': typeof publicauthResetPasswordRoute
-  '/products/$productId': typeof publicProductsProductIdRoute
-  '/cart': typeof protectedCartIndexRoute
-  '/orders': typeof protectedOrdersIndexRoute
-  '/profile': typeof protectedProfileIndexRoute
-  '/wishlist': typeof protectedWishlistIndexRoute
-  '/products': typeof publicProductsIndexRoute
-  '/products/categories/$category': typeof publicProductsCategoriesCategoryRoute
+  "/": typeof publicIndexRoute;
+  "/forgot-password": typeof publicauthForgotPasswordRoute;
+  "/login": typeof publicauthLoginRoute;
+  "/register": typeof publicauthRegisterRoute;
+  "/reset-password": typeof publicauthResetPasswordRoute;
+  "/products/$productId": typeof publicProductsProductIdRoute;
+  "/cart": typeof protectedCartIndexRoute;
+  "/orders": typeof protectedOrdersIndexRoute;
+  "/profile": typeof protectedProfileIndexRoute;
+  "/wishlist": typeof protectedWishlistIndexRoute;
+  "/products": typeof publicProductsIndexRoute;
+  "/products/categories/$category": typeof publicProductsCategoriesCategoryRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/(protected)': typeof protectedRouteRouteWithChildren
-  '/(public)': typeof publicRouteRouteWithChildren
-  '/(public)/': typeof publicIndexRoute
-  '/(public)/(auth)/forgot-password': typeof publicauthForgotPasswordRoute
-  '/(public)/(auth)/login': typeof publicauthLoginRoute
-  '/(public)/(auth)/register': typeof publicauthRegisterRoute
-  '/(public)/(auth)/reset-password': typeof publicauthResetPasswordRoute
-  '/(public)/products/$productId': typeof publicProductsProductIdRoute
-  '/(protected)/cart/': typeof protectedCartIndexRoute
-  '/(protected)/orders/': typeof protectedOrdersIndexRoute
-  '/(protected)/profile/': typeof protectedProfileIndexRoute
-  '/(protected)/wishlist/': typeof protectedWishlistIndexRoute
-  '/(public)/products/': typeof publicProductsIndexRoute
-  '/(public)/products/categories/$category': typeof publicProductsCategoriesCategoryRoute
+  __root__: typeof rootRouteImport;
+  "/(protected)": typeof protectedRouteRouteWithChildren;
+  "/(public)": typeof publicRouteRouteWithChildren;
+  "/(public)/": typeof publicIndexRoute;
+  "/(public)/(auth)/forgot-password": typeof publicauthForgotPasswordRoute;
+  "/(public)/(auth)/login": typeof publicauthLoginRoute;
+  "/(public)/(auth)/register": typeof publicauthRegisterRoute;
+  "/(public)/(auth)/reset-password": typeof publicauthResetPasswordRoute;
+  "/(public)/products/$productId": typeof publicProductsProductIdRoute;
+  "/(protected)/cart/": typeof protectedCartIndexRoute;
+  "/(protected)/orders/": typeof protectedOrdersIndexRoute;
+  "/(protected)/profile/": typeof protectedProfileIndexRoute;
+  "/(protected)/wishlist/": typeof protectedWishlistIndexRoute;
+  "/(public)/products/": typeof publicProductsIndexRoute;
+  "/(public)/products/categories/$category": typeof publicProductsCategoriesCategoryRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
-    | '/'
-    | '/forgot-password'
-    | '/login'
-    | '/register'
-    | '/reset-password'
-    | '/products/$productId'
-    | '/cart/'
-    | '/orders/'
-    | '/profile/'
-    | '/wishlist/'
-    | '/products/'
-    | '/products/categories/$category'
-  fileRoutesByTo: FileRoutesByTo
+    | "/"
+    | "/forgot-password"
+    | "/login"
+    | "/register"
+    | "/reset-password"
+    | "/products/$productId"
+    | "/cart/"
+    | "/orders/"
+    | "/profile/"
+    | "/wishlist/"
+    | "/products/"
+    | "/products/categories/$category";
+  fileRoutesByTo: FileRoutesByTo;
   to:
-    | '/'
-    | '/forgot-password'
-    | '/login'
-    | '/register'
-    | '/reset-password'
-    | '/products/$productId'
-    | '/cart'
-    | '/orders'
-    | '/profile'
-    | '/wishlist'
-    | '/products'
-    | '/products/categories/$category'
+    | "/"
+    | "/forgot-password"
+    | "/login"
+    | "/register"
+    | "/reset-password"
+    | "/products/$productId"
+    | "/cart"
+    | "/orders"
+    | "/profile"
+    | "/wishlist"
+    | "/products"
+    | "/products/categories/$category";
   id:
-    | '__root__'
-    | '/(protected)'
-    | '/(public)'
-    | '/(public)/'
-    | '/(public)/(auth)/forgot-password'
-    | '/(public)/(auth)/login'
-    | '/(public)/(auth)/register'
-    | '/(public)/(auth)/reset-password'
-    | '/(public)/products/$productId'
-    | '/(protected)/cart/'
-    | '/(protected)/orders/'
-    | '/(protected)/profile/'
-    | '/(protected)/wishlist/'
-    | '/(public)/products/'
-    | '/(public)/products/categories/$category'
-  fileRoutesById: FileRoutesById
+    | "__root__"
+    | "/(protected)"
+    | "/(public)"
+    | "/(public)/"
+    | "/(public)/(auth)/forgot-password"
+    | "/(public)/(auth)/login"
+    | "/(public)/(auth)/register"
+    | "/(public)/(auth)/reset-password"
+    | "/(public)/products/$productId"
+    | "/(protected)/cart/"
+    | "/(protected)/orders/"
+    | "/(protected)/profile/"
+    | "/(protected)/wishlist/"
+    | "/(public)/products/"
+    | "/(public)/products/categories/$category";
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  protectedRouteRoute: typeof protectedRouteRouteWithChildren
-  publicRouteRoute: typeof publicRouteRouteWithChildren
+  protectedRouteRoute: typeof protectedRouteRouteWithChildren;
+  publicRouteRoute: typeof publicRouteRouteWithChildren;
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/(protected)': {
-      id: '/(protected)'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof protectedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(public)': {
-      id: '/(public)'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof publicRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(public)/': {
-      id: '/(public)/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof publicIndexRouteImport
-      parentRoute: typeof publicRouteRoute
-    }
-    '/(protected)/cart/': {
-      id: '/(protected)/cart/'
-      path: '/cart'
-      fullPath: '/cart/'
-      preLoaderRoute: typeof protectedCartIndexRouteImport
-      parentRoute: typeof protectedRouteRoute
-    }
-    '/(protected)/orders/': {
-      id: '/(protected)/orders/'
-      path: '/orders'
-      fullPath: '/orders/'
-      preLoaderRoute: typeof protectedOrdersIndexRouteImport
-      parentRoute: typeof protectedRouteRoute
-    }
-    '/(protected)/profile/': {
-      id: '/(protected)/profile/'
-      path: '/profile'
-      fullPath: '/profile/'
-      preLoaderRoute: typeof protectedProfileIndexRouteImport
-      parentRoute: typeof protectedRouteRoute
-    }
-    '/(protected)/wishlist/': {
-      id: '/(protected)/wishlist/'
-      path: '/wishlist'
-      fullPath: '/wishlist/'
-      preLoaderRoute: typeof protectedWishlistIndexRouteImport
-      parentRoute: typeof protectedRouteRoute
-    }
-    '/(public)/(auth)/forgot-password': {
-      id: '/(public)/(auth)/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof publicauthForgotPasswordRouteImport
-      parentRoute: typeof publicRouteRoute
-    }
-    '/(public)/(auth)/login': {
-      id: '/(public)/(auth)/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof publicauthLoginRouteImport
-      parentRoute: typeof publicRouteRoute
-    }
-    '/(public)/(auth)/register': {
-      id: '/(public)/(auth)/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof publicauthRegisterRouteImport
-      parentRoute: typeof publicRouteRoute
-    }
-    '/(public)/(auth)/reset-password': {
-      id: '/(public)/(auth)/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof publicauthResetPasswordRouteImport
-      parentRoute: typeof publicRouteRoute
-    }
-    '/(public)/products/': {
-      id: '/(public)/products/'
-      path: '/products'
-      fullPath: '/products/'
-      preLoaderRoute: typeof publicProductsIndexRouteImport
-      parentRoute: typeof publicRouteRoute
-    }
-    '/(public)/products/$productId': {
-      id: '/(public)/products/$productId'
-      path: '/products/$productId'
-      fullPath: '/products/$productId'
-      preLoaderRoute: typeof publicProductsProductIdRouteImport
-      parentRoute: typeof publicRouteRoute
-    }
-    '/(public)/products/categories/$category': {
-      id: '/(public)/products/categories/$category'
-      path: '/products/categories/$category'
-      fullPath: '/products/categories/$category'
-      preLoaderRoute: typeof publicProductsCategoriesCategoryRouteImport
-      parentRoute: typeof publicRouteRoute
-    }
+    "/(protected)": {
+      id: "/(protected)";
+      path: "";
+      fullPath: "";
+      preLoaderRoute: typeof protectedRouteRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/(public)": {
+      id: "/(public)";
+      path: "";
+      fullPath: "";
+      preLoaderRoute: typeof publicRouteRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/(public)/": {
+      id: "/(public)/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof publicIndexRouteImport;
+      parentRoute: typeof publicRouteRoute;
+    };
+    "/(protected)/cart/": {
+      id: "/(protected)/cart/";
+      path: "/cart";
+      fullPath: "/cart/";
+      preLoaderRoute: typeof protectedCartIndexRouteImport;
+      parentRoute: typeof protectedRouteRoute;
+    };
+    "/(protected)/orders/": {
+      id: "/(protected)/orders/";
+      path: "/orders";
+      fullPath: "/orders/";
+      preLoaderRoute: typeof protectedOrdersIndexRouteImport;
+      parentRoute: typeof protectedRouteRoute;
+    };
+    "/(protected)/profile/": {
+      id: "/(protected)/profile/";
+      path: "/profile";
+      fullPath: "/profile/";
+      preLoaderRoute: typeof protectedProfileIndexRouteImport;
+      parentRoute: typeof protectedRouteRoute;
+    };
+    "/(protected)/wishlist/": {
+      id: "/(protected)/wishlist/";
+      path: "/wishlist";
+      fullPath: "/wishlist/";
+      preLoaderRoute: typeof protectedWishlistIndexRouteImport;
+      parentRoute: typeof protectedRouteRoute;
+    };
+    "/(public)/(auth)/forgot-password": {
+      id: "/(public)/(auth)/forgot-password";
+      path: "/forgot-password";
+      fullPath: "/forgot-password";
+      preLoaderRoute: typeof publicauthForgotPasswordRouteImport;
+      parentRoute: typeof publicRouteRoute;
+    };
+    "/(public)/(auth)/login": {
+      id: "/(public)/(auth)/login";
+      path: "/login";
+      fullPath: "/login";
+      preLoaderRoute: typeof publicauthLoginRouteImport;
+      parentRoute: typeof publicRouteRoute;
+    };
+    "/(public)/(auth)/register": {
+      id: "/(public)/(auth)/register";
+      path: "/register";
+      fullPath: "/register";
+      preLoaderRoute: typeof publicauthRegisterRouteImport;
+      parentRoute: typeof publicRouteRoute;
+    };
+    "/(public)/(auth)/reset-password": {
+      id: "/(public)/(auth)/reset-password";
+      path: "/reset-password";
+      fullPath: "/reset-password";
+      preLoaderRoute: typeof publicauthResetPasswordRouteImport;
+      parentRoute: typeof publicRouteRoute;
+    };
+    "/(public)/products/": {
+      id: "/(public)/products/";
+      path: "/products";
+      fullPath: "/products/";
+      preLoaderRoute: typeof publicProductsIndexRouteImport;
+      parentRoute: typeof publicRouteRoute;
+    };
+    "/(public)/products/$productId": {
+      id: "/(public)/products/$productId";
+      path: "/products/$productId";
+      fullPath: "/products/$productId";
+      preLoaderRoute: typeof publicProductsProductIdRouteImport;
+      parentRoute: typeof publicRouteRoute;
+    };
+    "/(public)/products/categories/$category": {
+      id: "/(public)/products/categories/$category";
+      path: "/products/categories/$category";
+      fullPath: "/products/categories/$category";
+      preLoaderRoute: typeof publicProductsCategoriesCategoryRouteImport;
+      parentRoute: typeof publicRouteRoute;
+    };
   }
 }
 
 interface protectedRouteRouteChildren {
-  protectedCartIndexRoute: typeof protectedCartIndexRoute
-  protectedOrdersIndexRoute: typeof protectedOrdersIndexRoute
-  protectedProfileIndexRoute: typeof protectedProfileIndexRoute
-  protectedWishlistIndexRoute: typeof protectedWishlistIndexRoute
+  protectedCartIndexRoute: typeof protectedCartIndexRoute;
+  protectedOrdersIndexRoute: typeof protectedOrdersIndexRoute;
+  protectedProfileIndexRoute: typeof protectedProfileIndexRoute;
+  protectedWishlistIndexRoute: typeof protectedWishlistIndexRoute;
 }
 
 const protectedRouteRouteChildren: protectedRouteRouteChildren = {
@@ -307,21 +307,21 @@ const protectedRouteRouteChildren: protectedRouteRouteChildren = {
   protectedOrdersIndexRoute: protectedOrdersIndexRoute,
   protectedProfileIndexRoute: protectedProfileIndexRoute,
   protectedWishlistIndexRoute: protectedWishlistIndexRoute,
-}
+};
 
 const protectedRouteRouteWithChildren = protectedRouteRoute._addFileChildren(
   protectedRouteRouteChildren,
-)
+);
 
 interface publicRouteRouteChildren {
-  publicIndexRoute: typeof publicIndexRoute
-  publicauthForgotPasswordRoute: typeof publicauthForgotPasswordRoute
-  publicauthLoginRoute: typeof publicauthLoginRoute
-  publicauthRegisterRoute: typeof publicauthRegisterRoute
-  publicauthResetPasswordRoute: typeof publicauthResetPasswordRoute
-  publicProductsProductIdRoute: typeof publicProductsProductIdRoute
-  publicProductsIndexRoute: typeof publicProductsIndexRoute
-  publicProductsCategoriesCategoryRoute: typeof publicProductsCategoriesCategoryRoute
+  publicIndexRoute: typeof publicIndexRoute;
+  publicauthForgotPasswordRoute: typeof publicauthForgotPasswordRoute;
+  publicauthLoginRoute: typeof publicauthLoginRoute;
+  publicauthRegisterRoute: typeof publicauthRegisterRoute;
+  publicauthResetPasswordRoute: typeof publicauthResetPasswordRoute;
+  publicProductsProductIdRoute: typeof publicProductsProductIdRoute;
+  publicProductsIndexRoute: typeof publicProductsIndexRoute;
+  publicProductsCategoriesCategoryRoute: typeof publicProductsCategoriesCategoryRoute;
 }
 
 const publicRouteRouteChildren: publicRouteRouteChildren = {
@@ -333,16 +333,16 @@ const publicRouteRouteChildren: publicRouteRouteChildren = {
   publicProductsProductIdRoute: publicProductsProductIdRoute,
   publicProductsIndexRoute: publicProductsIndexRoute,
   publicProductsCategoriesCategoryRoute: publicProductsCategoriesCategoryRoute,
-}
+};
 
 const publicRouteRouteWithChildren = publicRouteRoute._addFileChildren(
   publicRouteRouteChildren,
-)
+);
 
 const rootRouteChildren: RootRouteChildren = {
   protectedRouteRoute: protectedRouteRouteWithChildren,
   publicRouteRoute: publicRouteRouteWithChildren,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();

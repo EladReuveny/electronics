@@ -56,8 +56,6 @@ export class ProductsController {
   }
 
   @Get()
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles('ADMIN')
   findAll() {
     return this.productsService.findAll();
   }

@@ -13,10 +13,7 @@ import { RedisService } from './redis.service';
       provide: REDIS_CLIENT,
       inject: [ConfigService, Logger],
       useFactory: (configService: ConfigService, logger: Logger) => {
-        const redis = new Redis({
-          host: configService.getOrThrow<string>('REDIS_HOST'),
-          port: configService.getOrThrow<number>('REDIS_PORT'),
-        });
+        const redis = new Redis(configService.getOrThrow<string>('REDIS_URL'));
 
         redis.on('connect', () => {
           logger.log('Connected to Redis');
