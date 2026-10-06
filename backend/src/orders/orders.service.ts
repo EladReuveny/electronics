@@ -108,7 +108,7 @@ export class OrdersService {
         );
       }
 
-      await this.notificationsService.sendOrderConfirmationEmail(
+      this.notificationsService.sendOrderConfirmationEmail(
         user.email,
         order.id,
       );

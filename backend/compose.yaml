@@ -1,0 +1,43 @@
+services:
+  server:
+    build:
+      context: .
+    container_name: electronics-server
+    env_file:
+      - .env
+    ports:
+      - ${PORT:-3000}:3000
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:17-alpine
+    restart: always
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    container_name: electronics-db
+    ports:
+      - ${DB_PORT:-5432}:5432
+    healthcheck:
+      test: ['CMD', 'pg_isready']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7.2-alpine
+    restart: always
+    container_name: electronics-redis
+    ports:
+      - ${REDIS_PORT:-6379}:6379
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db-data:

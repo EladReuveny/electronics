@@ -1,239 +1,296 @@
-# 🛍️ Electronics E-Commerce Application
+﻿# 🛍️ Electronics E-Commerce Application
 
-An advanced **Full-Stack E-Commerce Web Application** for electronics, built with a modern tech stack and a focus on performance, scalability, and user experience.
+An advanced full-stack e-commerce application for electronics, built with a modern tech stack focused on performance, scalability, and a smooth user experience.
 
-- ⚙️ **Backend**: Spring Boot (Java)
-- 💻 **Frontend**: React 19 (TypeScript)
-- 🗄️ **Database**: PostgreSQL
-- 🤖 **CI/CD**: GitHub Actions
+- ⚙️ Backend: Node.js + NestJS
+- 💻 Frontend: React 19 + TypeScript
+- 🗄️ Database: PostgreSQL
+- 🤖 CI/CD: GitHub Actions
 
-This responsive web application supports two roles: **User** and **Admin**, offering a complete and seamless cart experience.
+## Main Menu
 
----
-
-## ✨ Features
-
-### 👤 User Functionality
-
-- 🔐 **Authentication**: Register, Login, and Forgot Password (via email/address/phone).
-- 🛒 **Shop**: Browse products and categories, view detailed product information.
-- 📦 **Cart**: Add, update, and remove items with real-time calculations.
-- ❤️ **Wishlist**: Save favorite products for later.
-- 🔎 **Search & Filter**: Powerful search by name, category, and price range.
-- 🧾 **Orders**: Place orders, view order history, and manage order details (including cancellation within a time window).
-- ⚙️ **Profile**: Manage personal details and application preferences (Dark/Light mode support).
-
-### 🛠️ Admin Functionality
-
-- 📦 **Product Management**: Full CRUD operations for products and categories.
-- 📃 **Order Management**: Monitor all customer orders and update statuses (Pending, Shipped, etc.).
-- 🧾 **Export**: Download order lists in XML format for external integration.
-- 🌐 **Dashboard**: A responsive admin interface optimized for all devices.
+- [Overview](#overview)
+- [Features](#features)
+- [Responsiveness](#responsiveness)
+- [Tech Stack](#tech-stack)
+- [Screenshots](#screenshots)
+- [Setup Instructions](#setup-instructions)
+- [Available Scripts](#available-scripts)
+- [CI/CD](#cicd)
+- [Demo](#demo)
+- [Author](#author)
 
 ---
 
-## 📱 Responsiveness
+## Overview
+
+This application supports two roles: User and Admin, and provides a complete shopping flow from browsing products to checkout and order management. The backend handles authentication, product and inventory logic, cart and wishlist operations, order processing, notifications, and infrastructure services. The frontend provides the shopping experience, dashboard UI, and user interactions.
+
+---
+
+## Features
+
+### User Functionality
+
+- 🔐 Authentication: register, login, and password recovery via email, address, or phone-based flows
+- 🛒 Shop: browse products and categories, view product details, and discover inventory quickly
+- 📦 Cart: add, update, remove, and review items with live totals
+- ❤️ Wishlist: save favorite products for later
+- 🔎 Search & Filter: search by name, category, and price range
+- 🧾 Orders: place orders, review order history, and manage order details including cancellation windows
+- ⚙️ Profile: manage personal details and interface preferences, including theme support
+
+### Admin Functionality
+
+- 📦 Product Management: create, update, archive, and remove product listings
+- 📃 Order Management: monitor customer orders and update statuses such as Pending or Shipped
+- 🧾 Export: download order lists as XML for external integrations
+- 🌐 Dashboard: responsive admin dashboard optimized for desktop, tablet, and mobile layouts
+
+---
+
+## Responsiveness
 
 The application is fully responsive and optimized for:
 
-- ✅ **Mobile** (Phones)
-- ✅ **Tablets**
-- ✅ **Desktops**
+- ✅ Mobile
+- ✅ Tablets
+- ✅ Desktops
 
-It utilizes **Tailwind CSS 4** (Flexbox and Grid) along with conditional rendering to ensure a seamless experience across all screen sizes.
-
----
-
-## ⚙️ Tech Stack
-
-### 💻 Frontend (Electronics Store UI)
-
-- **Framework**: [React 19](https://react.dev/)
-- **Build Tool**: [Vite](https://vitejs.dev/)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **State Management**:
-  - [Zustand](https://zustand-demo.pmnd.rs/) (Client-side state: Auth, Theme)
-  - [TanStack Query v5](https://tanstack.com/query/latest) (Server-side state: Data fetching/caching)
-- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
-- **Routing**: [React Router 7](https://reactrouter.com/)
-- **Form Handling**: [TanStack Form](https://tanstack.com/form/latest) & [Zod](https://zod.dev/)
-- **HTTP Client**: [Axios](https://axios-http.com/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Notifications**: [React Toastify](https://fkhadra.github.io/react-toastify/)
-
-### ⚙️ Backend
-
-- **Framework**: Spring Boot (Java)
-- **Data Access**: Spring Data JPA
-- **Format Support**: Jackson (JSON & XML)
-- **API**: RESTful Web Services
-- **Build Tool**: Maven
-
-### 🗄️ Database & Storage
-
-- **Database**: PostgreSQL
-- **Image Hosting**: Imgur
+It uses Tailwind CSS 4 with Flexbox and Grid utilities, along with conditional rendering patterns to ensure a smooth experience across screen sizes.
 
 ---
 
-## 📸 Screenshots
+## Tech Stack
 
-### 🌟 New Modern UI (Current Version)
+### Frontend
 
-The latest version of the application features a sleek, dark-themed modern interface with improved accessibility and performance.
+| Technology                                                  | Purpose                                                                |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [React 19](https://react.dev/)                              | UI library for building the interactive storefront and admin dashboard |
+| [Vite](https://vitejs.dev/)                                 | Fast dev server and production build tooling                           |
+| [TypeScript](https://www.typescriptlang.org/)               | Strong typing for safer frontend development                           |
+| [Zustand](https://zustand-demo.pmnd.rs/)                    | Client-side state management for auth, UI state, and theme             |
+| [TanStack Query v5](https://tanstack.com/query/latest)      | Fetching, caching, and syncing server data in the client               |
+| [TanStack Router](https://tanstack.com/router/latest)       | Route handling and navigation across pages                             |
+| [TanStack Form](https://tanstack.com/form/latest)           | Structured form state and validation workflows                         |
+| [Zod](https://zod.dev/)                                     | Runtime validation for form data and API inputs                        |
+| [Tailwind CSS 4](https://tailwindcss.com/)                  | Utility-first styling for responsive interface design                  |
+| [Axios](https://axios-http.com/)                            | HTTP client for communicating with the backend API                     |
+| [Lucide React](https://lucide.dev/)                         | Modern icon set for product and app UI                                 |
+| [React Toastify](https://fkhadra.github.io/react-toastify/) | Clean toast notifications for user feedback                            |
+
+### Backend
+
+| Technology                                                            | Purpose                                                         |
+| --------------------------------------------------------------------- | --------------------------------------------------------------- |
+| [Node.js](https://nodejs.org/)                                        | JavaScript runtime that powers the API server                   |
+| [NestJS](https://nestjs.com/)                                         | Progressive Node.js framework for scalable backend architecture |
+| [TypeScript](https://www.typescriptlang.org/)                         | Type-safe application code across services and modules          |
+| [PostgreSQL](https://www.postgresql.org/)                             | Relational database for persistent application data             |
+| [Redis](https://redis.io/)                                            | In-memory caching and fast session or performance enhancement   |
+| [Drizzle ORM](https://orm.drizzle.team/)                              | Type-safe SQL database access and migrations                    |
+| [JWT](https://jwt.io/)                                                | Secure authentication and session token management              |
+| [Cloudinary](https://cloudinary.com/)                                 | Cloud image storage and media delivery                          |
+| [Nodemailer](https://nodemailer.com/)                                 | Email notifications and transactional messages                  |
+| [Helmet](https://helmetjs.github.io/)                                 | Security headers for the HTTP server                            |
+| [class-validator](https://github.com/typestack/class-validator)       | Request validation and DTO rules                                |
+| [class-transformer](https://github.com/typestack/class-transformer)   | Data transformation and sanitization                            |
+| [Throttler](https://github.com/express-rate-limit/express-rate-limit) | Request rate limiting and API protection                        |
+| [Pino](https://github.com/pinojs/pino)                                | Structured logging for backend observability                    |
+
+---
+
+## Screenshots
+
+### Modern UI
+
+The latest version includes a dark, modern UI with better accessibility and improved performance.
 
 <details>
-<summary>👤 <strong>User Experience (New UI)</strong></summary>
+<summary>👤 <strong>User Experience</strong></summary>
 
-- **Login & Authentication**  
-  ![Login](https://imgur.com/PTR1Cgc.png)
-- **Registration**  
-  ![Register](https://imgur.com/9fztvqO.png)
-- **Password Recovery**  
-  ![Forgot Password](https://imgur.com/DmoM8Tq.png)
-- **Browse Categories**  
-  ![Categories Page](https://imgur.com/0k0wZ93.png)
-- **Product Discovery**  
-  ![Products](https://imgur.com/LZSVuSp.png)
-- **Detailed Product View**  
-  ![Product Details](https://imgur.com/TyDabSs.png)
-- **Search Experience**  
-  ![Search Modal](https://imgur.com/RWVI8rJ.png)
-- **cart Cart**  
-  ![cart Cart](https://imgur.com/8yCQgEx.png)
-- **Wishlist**  
-  ![Wishlist](https://imgur.com/0Xx60UU.png)
-- **Orders Overview**  
-  ![Orders](https://imgur.com/ZaTpzGT.png)
-- **Detailed Order History**  
-  ![Order Details](https://imgur.com/wUwzRad.png)
-- **User Profile Settings**  
-  ![Profile](https://imgur.com/9fMK6vZ.png)
+- Login & Authentication
+- Registration
+- Password Recovery
+- Categories Page
+- Products
+- Product Details
+- Search Modal
+- Cart
+- Wishlist
+- Orders
+- Profile
 
 </details>
 
 <details>
-<summary>🛠️ <strong>Admin Dashboard (New UI)</strong></summary>
+<summary>🛠️ <strong>Admin Dashboard</strong></summary>
 
-- **Product Inventory Management**  
-  ![Admin Products](https://imgur.com/DwpC5Wh.png)
-- **Add New Product**  
-  ![Add Product Modal](https://imgur.com/VJIASxC.png)
-- **Edit Product Details**  
-  ![Edit Product Modal](https://imgur.com/HVdGTzC.png)
-- **Order Tracking**  
-  ![Admin Orders](https://imgur.com/n0SR4Qa.png)
-- **Order Details (Admin View)**  
-  ![Admin Product Details](https://imgur.com/yYGOvdX.png)
-- **XML Data Export**  
-  ![XML Format](https://imgur.com/N0hF8yH.png)
+- Product Inventory Management
+- Add New Product
+- Edit Product Details
+- Order Tracking
+- Admin Order Details
+- XML Export
 
 </details>
 
 <details>
-<summary>💡 <strong>Light Theme (New UI)</strong></summary>
+<summary>💡 <strong>Light Theme</strong></summary>
 
-- **User Profile (Light)**  
-  ![Profile Light](https://imgur.com/MSpy3AD.png)
-- **Wishlist (Light)**  
-  ![Wishlist Light](https://imgur.com/tyrCIZo.png)
-- **Order History (Light)**  
-  ![Order Details Light](https://imgur.com/IbmEoUg.png)
-- **Admin Orders (Light)**  
-  ![Admin Orders Light](https://imgur.com/qVyRTpM.png)
-- **Admin Product Details (Light)**  
-  ![Admin Product Details Light](https://imgur.com/FKCSVe3.png)
+- Profile Light
+- Wishlist Light
+- Order History Light
+- Admin Orders Light
+- Admin Product Details Light
 
 </details>
 
 ---
 
-### 🏛️ Legacy UI (Reference)
-
-Previous iterations of the UI design for historical reference.
+### Legacy UI Reference
 
 <details>
 <summary>View Legacy UI Screenshots</summary>
 
-- **Legacy Login**  
-  ![Legacy Login](https://imgur.com/hHHfjjU.png)
-- **Legacy Products**  
-  ![Legacy Products](https://imgur.com/yJkQK11.png)
-- **Legacy Search Filters**  
-  ![Legacy Search](https://imgur.com/7rZb5pq.png)
-- **Legacy Cart (Light)**  
-  ![Legacy Cart Light](https://imgur.com/LwRyNZX.png)
-- **Legacy Admin Products**  
-  ![Legacy Admin Products](https://imgur.com/gGOUsAx.png)
-- **Legacy Admin Orders**  
-  ![Legacy Admin Orders](https://imgur.com/bjmox9p.png)
+- Legacy Login
+- Legacy Products
+- Legacy Search Filters
+- Legacy Cart (Light)
+- Legacy Admin Products
+- Legacy Admin Orders
 
 </details>
 
-👉 [**View All Screenshots in Gallery**](https://imgur.com/a/x2solXr)
+👉 [View All Screenshots in Gallery](https://imgur.com/a/x2solXr)
 
 ---
 
-## 🎥 Demo
+## Setup Instructions
 
-🚀 **Live Demo**: [Electronics Store App](https://electronics-store-app.netlify.app/)
-
----
-
-## 🛠️ Setup Instructions
-
-### 🔧 Backend (Spring Boot)
+### Backend (Node.js + NestJS)
 
 1. Clone the repository and navigate to the backend folder.
-2. Update `src/main/resources/application.properties` with your PostgreSQL credentials:
-   ```properties
-   spring.datasource.url=jdbc:postgresql://localhost:5432/your_db_name
-   spring.datasource.username=your_db_username
-   spring.datasource.password=your_db_password
-   ```
-3. Run the `ElectronicsApplication.java` file.
+2. Install dependencies:
 
-### 💻 Frontend (React + Vite)
+```bash
+npm install
+```
 
-1. Navigate to the frontend directory:
-   ```bash
-   npm install
-   ```
-2. Start the development server:
-   ```bash
-   npm run dev
-   ```
-3. Open [http://localhost:5173](http://localhost:5173).
+3. Configure environment variables in a `.env` file or Docker environment:
+
+```env
+NODE_ENV=development
+PORT=3000
+DATABASE_URL=postgresql://<your_db_username>:<your_db_password>@<your_db_host>:5432/<your_db_name>
+JWT_SECRET=<your_secret_key>
+JWT_EXPIRATION_TIME=7d
+REDIS_HOST=<your_redis_host>
+REDIS_PORT=6379
+FRONTEND_URL=http://localhost:5173
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=<your_smtp_user>
+SMTP_PASSWORD=<your_smtp_password>
+SMTP_FROM=no-reply@example.com
+SMTP_FROM_NAME=Electronics Store
+CLOUDINARY_CLOUD_NAME=<your_cloudinary_cloud_name>
+CLOUDINARY_API_KEY=<your_cloudinary_api_key>
+CLOUDINARY_API_SECRET=<your_cloudinary_api_secret>
+```
+
+4. Start the backend:
+
+```bash
+npm run start:dev
+```
+
+5. For Docker-based setup:
+
+```bash
+docker compose up --build
+```
+
+### Frontend (React + Vite)
+
+1. Navigate to the frontend folder.
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Start the development server:
+
+```bash
+npm run dev
+```
+
+4. Open the app in the browser at:
+
+```text
+http://localhost:5173
+```
 
 ---
 
-## 📜 Available Scripts
+## Available Scripts
 
-- `npm run dev`: Start development server with HMR.
-- `npm run build`: Build the project for production (includes type-checking).
-- `npm run lint`: Run ESLint to check for code quality.
-- `npm run format:check`: Check code formatting with Prettier.
-- `npm run format:fix`: Automatically fix code formatting with Prettier.
-- `npm run preview`: Preview the production build locally.
+### Backend
+
+```bash
+npm run build
+npm run start
+npm run start:dev
+npm run start:prod
+npm run test
+npm run test:e2e
+npm run lint
+npm run lint:check
+npm run format
+npm run format:check
+npm run db:generate
+npm run db:migrate
+npm run db:push
+npm run db:studio
+```
+
+### Frontend
+
+```bash
+npm run dev
+npm run build
+npm run preview
+npm run lint
+npm run format:check
+npm run format:fix
+```
 
 ---
 
-## 🤖 CI/CD
+## CI/CD
 
-This project uses **GitHub Actions** for continuous integration. On every push and pull request, the following checks are performed:
+This project uses GitHub Actions for continuous integration. On every push and pull request, the workflow performs:
 
-1. **Clean Install**: Uses `npm ci` for reliable dependency management.
-2. **Linting**: Ensures code adheres to ESLint rules.
-3. **Formatting**: Validates code style using Prettier.
-4. **Build & Type-Check**: Runs `tsc` and ensures the project builds successfully.
+1. Dependency installation with `npm ci`
+2. Linting checks with ESLint
+3. Formatting validation with Prettier
+4. Production build verification for both frontend and backend
 
 ---
 
-## 👨‍💻 Author
+## Demo
+
+🚀 Live Demo: [Electronics Store App](https://electronics-online.netlify.app/)
+
+---
+
+## Author
 
 **Elad Reuveny**  
 📧 [eladre123@gmail.com](mailto:eladre123@gmail.com)  
 🔗 [LinkedIn](https://www.linkedin.com/in/eladreuveny/)  
-🌐 [Portfolio](https://eladreuveny-portfolio.netlify.app/)
+🌐 [Portfolio](https://eladtechportfolio.netlify.app/)
 
-© Electronics Store App — All rights reserved.
+© Electronics — All rights reserved.

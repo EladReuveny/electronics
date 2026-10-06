@@ -82,7 +82,7 @@ export class AuthService {
     }
 
     try {
-      await this.notificationsService.sendWelcomeEmail(newUser.email);
+      this.notificationsService.sendWelcomeEmail(newUser.email);
     } catch (err: unknown) {
       this.logger.error(`Failed to send welcome email: ${err}`);
     }
@@ -115,7 +115,7 @@ export class AuthService {
 
     if (user) {
       try {
-        await this.notificationsService.sendPasswordResetEmail(user);
+        this.notificationsService.sendPasswordResetEmail(user);
       } catch (err: unknown) {
         this.logger.error(
           `Failed to send password reset email to user with email ${email}: ${err}`,

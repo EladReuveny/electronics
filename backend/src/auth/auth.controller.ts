@@ -1,3 +1,4 @@
+import { JwtGuard } from '@app/common/guards/jwt.guard';
 import {
   Body,
   Controller,
@@ -14,7 +15,6 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { JwtGuard } from '@app/common/guards/jwt.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -30,7 +30,8 @@ export class AuthController {
     res.cookie('access-token', accessToken, {
       httpOnly: true, // Inaccessible to client-side JS (prevents XSS token theft); browser still attaches it to requests automatically
       secure: this.configService.get<string>('NODE_ENV') === 'prod', // HTTPS only in production
-      sameSite: 'lax', // Restricts cross-site cookie sending, helping mitigate CSRF
+      sameSite:
+        this.configService.get<string>('NODE_ENV') === 'prod' ? 'none' : 'lax', // Restricts cross-site cookie sending, helping mitigate CSRF
       maxAge: this.configService.get<number>('COOKIE_MAX_AGE_MS') ?? 604800000, // 7 days by default in milliseconds
     });
 
